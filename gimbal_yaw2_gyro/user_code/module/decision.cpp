@@ -1,8 +1,25 @@
 
 #include "decision.h"
+#include "string.h"
+#include "Can_receive.h"
+#include "gimbal.h"
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include "CRC8_CRC16.h"
+
+#ifdef __cplusplus
+}
+#endif
+
 
 Decision decision;
 extern Remote_control remote_control;
+extern Can_receive can_receive;
 
 void Decision::decision_init(void)
 {
@@ -10,6 +27,10 @@ void Decision::decision_init(void)
     remote_control_robot_last = remote_control.get_last_remote_control_point();
 
     robot_mode = ROBOT_ZERO_FORCE;
+
+    vset_to_remotset.x_set = 180;
+    vset_to_remotset.y_set = -280;
+    vset_to_remotset.z_set = -280;
 }
 
 void Decision::robot_set_mode(void)
@@ -17,7 +38,7 @@ void Decision::robot_set_mode(void)
     
 }
 
-uint8_t sw;
+uint8_t sw,goto_sentry_time;
 void Decision::remote_switch(void)
 {
     if(remote_control_robot->rc.ch[4] < -600 && sw == 1)
@@ -41,7 +62,7 @@ void Decision::remote_switch(void)
         sw = 1;
     }
 
-    if (robot_mode == YAW2_CTRL && remote_control_robot->rc.s[1] == 2)
+    if (robot_mode != YAW1_CTRL && remote_control_robot->rc.s[1] == 2)
     {
         robot_mode = ROBOT_ZERO_FORCE;
         /* code */
@@ -51,6 +72,35 @@ void Decision::remote_switch(void)
         robot_mode = YAW2_CTRL;
         /* code */
     }
+    if (robot_mode == YAW2_CTRL && remote_control_robot->rc.s[1] == 1)
+    {
+        goto_sentry_time++;
+        if (goto_sentry_time == 125)
+        {
+            goto_sentry_time = 0;
+            robot_mode = SENTRY_CTRL;
+            /* code */
+        }
+        
+        /* code */
+    }
+    else
+    {
+        goto_sentry_time = 0;
+    }
+    if (robot_mode == SENTRY_CTRL)
+    {
+        if (remote_control_robot->rc.s[1] != 1)
+        {
+            robot_mode = YAW2_CTRL;
+            /* code */
+        }
+        
+        /* code */
+    }
+    
+    
+
     
     
 
@@ -116,6 +166,84 @@ void Decision::robot_set_control(void)
         remote_ctrl_yaw1.rc.ch[4] = 0;
         /* code */
     }
+    else if (robot_mode == SENTRY_CTRL)
+    {
+        remote_ctrl_yaw2.rc.ch[0] = receivenavistate.data.speed_vector.rollz * vset_to_remotset.z_set;
+        remote_ctrl_yaw2.rc.ch[1] = 0;
+        remote_ctrl_yaw2.rc.ch[2] = receivenavistate.data.speed_vector.speedy * vset_to_remotset.y_set;
+        remote_ctrl_yaw2.rc.ch[3] = receivenavistate.data.speed_vector.speedx * vset_to_remotset.x_set;
+        remote_ctrl_yaw2.rc.ch[4] = 0;
+        remote_ctrl_yaw2.rc.s[0] = 1;
+        remote_ctrl_yaw2.rc.s[1] = 3;
+
+        remote_ctrl_yaw1.rc.ch[0] = 0;
+        remote_ctrl_yaw1.rc.ch[1] = 0;
+        remote_ctrl_yaw1.rc.ch[2] = 0;
+        remote_ctrl_yaw1.rc.ch[3] = 0;
+        remote_ctrl_yaw1.rc.ch[4] = 0;
+        remote_ctrl_yaw1.rc.s[0] = 2;
+        remote_ctrl_yaw1.rc.s[1] = 3;
+        /* code */
+    }
+    
+}
+
+void Decision::reveive_navi_status (uint8_t *data)
+{
+     //判断帧头数据是否为0xA5
+    memcpy(&receivenavistate, data, 43);
+}
+
+uint8_t Navi_send_data[40];
+
+void Decision::Send_Joint_Status (void)
+{
+    uint8_t send_length;
+    send_length = sizeof(SendJointState);
+    SendJointState.HeaderFrame.sof = 0x5A;
+    SendJointState.HeaderFrame.len = send_length-6; //sizeof(SendGameStatusData.HeaderFrame);
+    SendJointState.HeaderFrame.id  = 0x0C;
+    SendJointState.time_stamp = 0;
+
+    //send_length = sizeof(SendGameStatusData);
+
+    SendJointState.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendJointState.HeaderFrame),3,0xff);
+
+    SendJointState.data.yaw = gimbal.gimbal_yaw_motor.gyro_angle;
+    SendJointState.data.pitch = 0;
+
+    SendJointState.crc = get_CRC16_check_sum((uint8_t*)&SendJointState,send_length-2,0xffff);
+
+    memcpy(Navi_send_data, &SendJointState, send_length);
+
+    HAL_UART_Transmit(&huart1, Navi_send_data, send_length, 0xFFF);
+  
+    memset(Navi_send_data, 0, send_length);
+
+
+}
+
+void Decision::Send_Gmae_Status (void)
+{
+    uint8_t send_length;
+    send_length = sizeof(SendGameStatusData);
+    SendGameStatusData.HeaderFrame.sof = 0X5A;
+    SendGameStatusData.HeaderFrame.len = send_length-6; //sizeof(SendGameStatusData.HeaderFrame);
+    SendGameStatusData.HeaderFrame.id  = 0X07;
+    SendGameStatusData.time_stamp = 0;
+
+    SendGameStatusData.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendGameStatusData.HeaderFrame),3,0xff);
+
+    SendGameStatusData.data.game_progress = can_receive.gimbal_receive.game_progress;
+    SendGameStatusData.data.stage_remain_time = can_receive.gimbal_receive.game_time;
+
+    SendGameStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendGameStatusData,send_length-2,0xffff);
+
+    memcpy(Navi_send_data, &SendGameStatusData, send_length);
+
+    HAL_UART_Transmit(&huart1, Navi_send_data, send_length, 0xFFF);
+  
+    memset(Navi_send_data, 0, send_length);
 }
 
 const RC_ctrl_t* Decision::get_yaw2_ctrl_point(void)

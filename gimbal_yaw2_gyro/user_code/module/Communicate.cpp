@@ -38,7 +38,9 @@ uint8_t ch_switch;
 void Communicate::run()
 {
     //发送数据给视觉
-    vision_send_data(gimbal.vision_cmdid);
+    //vision_send_data(gimbal.vision_cmdid);
+    decision.Send_Gmae_Status();
+    decision.Send_Joint_Status();
     //向底盘发送遥控器和云台数据
     int16_t temp_ch0, temp_ch2, temp_ch3;
     uint16_t temp_v;
@@ -53,7 +55,8 @@ void Communicate::run()
 
     uint8_t temp_vision_cmdid = gimbal.vision_cmdid;
 
-    
+    can_receive.send_yaw_cooling_and_id_board_com();
+    can_receive.send_yaw_shoot_speed_and_mode_board_com();
 
     temp_auto = auto_switch;
     temp_aim = if_identify_target;
@@ -212,7 +215,8 @@ extern "C"
                 huart1.hdmarx->Instance->CR |= DMA_SxCR_CT;
                 __HAL_DMA_ENABLE(huart1.hdmarx);
 
-                vision_read_data(Vision_Buffer[0]); //读取视觉数据
+                //vision_read_data(Vision_Buffer[0]); //读取视觉数据
+                decision.reveive_navi_status(Vision_Buffer[0]);
                 memset(Vision_Buffer[0], 0, 50);
                 detect_hook(VISION_TOE);
             }
@@ -224,7 +228,8 @@ extern "C"
                 huart1.hdmarx->Instance->CR &= ~(DMA_SxCR_CT);
                 __HAL_DMA_ENABLE(huart1.hdmarx);
 
-                vision_read_data(Vision_Buffer[1]); //读取视觉数据
+                //vision_read_data(Vision_Buffer[1]); //读取视觉数据
+                decision.reveive_navi_status(Vision_Buffer[1]);
                 memset(Vision_Buffer[1], 0, 50);   //对象   内容  长度
                 detect_hook(VISION_TOE);
             }
