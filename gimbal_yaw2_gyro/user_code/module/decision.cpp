@@ -223,6 +223,8 @@ void Decision::Send_Joint_Status (void)
 
 }
 
+uint8_t game_mode_user=3;
+
 void Decision::Send_Gmae_Status (void)
 {
     uint8_t send_length;
@@ -234,8 +236,8 @@ void Decision::Send_Gmae_Status (void)
 
     SendGameStatusData.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendGameStatusData.HeaderFrame),3,0xff);
 
-    SendGameStatusData.data.game_progress = can_receive.gimbal_receive.game_progress;
-    SendGameStatusData.data.stage_remain_time = can_receive.gimbal_receive.game_time;
+    SendGameStatusData.data.game_progress = game_mode_user;//can_receive.gimbal_receive.game_progress;
+    SendGameStatusData.data.stage_remain_time = 300;//can_receive.gimbal_receive.game_time;
 
     SendGameStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendGameStatusData,send_length-2,0xffff);
 
