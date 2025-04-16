@@ -12,6 +12,15 @@ typedef enum
     SENTRY_CTRL,
 } robot_mode_e;
 
+typedef enum
+{
+    GOTO_FIGHT,
+    GOTO_HOME,
+    GOTO_GET_SUPPLY,
+} chassis_cmd_e;
+
+
+
 typedef __packed struct 
 {
   uint8_t sof;  // 数据帧起始字节，固定值为 0x5A
@@ -89,6 +98,21 @@ typedef __packed struct
 
 } SendGameStatusData_t;
 
+typedef __packed struct 
+{
+
+  HeaderFrame_t HeaderFrame;
+  uint32_t time_stamp;
+
+  __packed struct
+  {
+    uint8_t flag;
+    uint8_t chassis_cmd;
+  } data;
+  uint16_t crc;
+
+} SendBaceStatusData_t;
+
 //云台状态数据
 typedef __packed struct 
 {
@@ -120,6 +144,7 @@ class Decision
 
 public:
     robot_mode_e robot_mode;
+    chassis_cmd_e chassis_cmd;
 
     const RC_ctrl_t   *remote_control_robot;
     RC_ctrl_t   *remote_control_robot_last;
@@ -133,6 +158,7 @@ public:
     ReceiveNaviState_t  receivenavistate;
     SendGameStatusData_t  SendGameStatusData;
     SendJointState_t  SendJointState;
+    SendBaceStatusData_t  SendBaceStatusData;
     vset_to_remotset_t  vset_to_remotset;
 
     void remote_switch(void);
@@ -148,6 +174,10 @@ public:
     void reveive_navi_status (uint8_t *data);
     void Send_Gmae_Status (void);
     void Send_Joint_Status (void);
+    void Send_Bace_Status (void);
+
+    void sentry_mode_set (void);
+    void navi_set (void);
 
 
 };

@@ -34,13 +34,26 @@ void Communicate::init()
 }
 
 uint8_t ch_switch;
+uint8_t uart_switch=0;
 
 void Communicate::run()
 {
     //发送数据给视觉
     //vision_send_data(gimbal.vision_cmdid);
-    decision.Send_Gmae_Status();
-    decision.Send_Joint_Status();
+    //decision.Send_Gmae_Status();
+    if (uart_switch == 0)
+    {
+        decision.Send_Bace_Status();
+        uart_switch = 1;
+        /* code */
+    }
+    else
+    {
+        decision.Send_Joint_Status();
+        uart_switch = 0;
+    }    
+    // decision.Send_Bace_Status();
+    // decision.Send_Joint_Status();
     //向底盘发送遥控器和云台数据
     int16_t temp_ch0, temp_ch2, temp_ch3;
     uint16_t temp_v;

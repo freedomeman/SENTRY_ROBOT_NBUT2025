@@ -5,6 +5,7 @@
 #include "gimbal.h"
 
 
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -168,24 +169,35 @@ void Decision::robot_set_control(void)
     }
     else if (robot_mode == SENTRY_CTRL)
     {
-        remote_ctrl_yaw2.rc.ch[0] = receivenavistate.data.speed_vector.rollz * vset_to_remotset.z_set;
-        remote_ctrl_yaw2.rc.ch[1] = 0;
-        remote_ctrl_yaw2.rc.ch[2] = receivenavistate.data.speed_vector.speedy * vset_to_remotset.y_set;
-        remote_ctrl_yaw2.rc.ch[3] = receivenavistate.data.speed_vector.speedx * vset_to_remotset.x_set;
-        remote_ctrl_yaw2.rc.ch[4] = 0;
-        remote_ctrl_yaw2.rc.s[0] = 1;
-        remote_ctrl_yaw2.rc.s[1] = 3;
 
-        remote_ctrl_yaw1.rc.ch[0] = 0;
-        remote_ctrl_yaw1.rc.ch[1] = 0;
-        remote_ctrl_yaw1.rc.ch[2] = 0;
-        remote_ctrl_yaw1.rc.ch[3] = 0;
-        remote_ctrl_yaw1.rc.ch[4] = 0;
-        remote_ctrl_yaw1.rc.s[0] = 2;
-        remote_ctrl_yaw1.rc.s[1] = 3;
+        navi_set();
         /* code */
     }
     
+}
+
+void Decision::sentry_mode_set (void)
+{
+    chassis_cmd = GOTO_FIGHT;
+}
+
+void Decision::navi_set (void)
+{
+    remote_ctrl_yaw2.rc.ch[0] = receivenavistate.data.speed_vector.rollz * vset_to_remotset.z_set;
+    remote_ctrl_yaw2.rc.ch[1] = 0;
+    remote_ctrl_yaw2.rc.ch[2] = receivenavistate.data.speed_vector.speedy * vset_to_remotset.y_set;
+    remote_ctrl_yaw2.rc.ch[3] = receivenavistate.data.speed_vector.speedx * vset_to_remotset.x_set;
+    remote_ctrl_yaw2.rc.ch[4] = 0;
+    remote_ctrl_yaw2.rc.s[0] = 1;
+    remote_ctrl_yaw2.rc.s[1] = 3;
+
+    remote_ctrl_yaw1.rc.ch[0] = 0;
+    remote_ctrl_yaw1.rc.ch[1] = 0;
+    remote_ctrl_yaw1.rc.ch[2] = 0;
+    remote_ctrl_yaw1.rc.ch[3] = 0;
+    remote_ctrl_yaw1.rc.ch[4] = 0;
+    remote_ctrl_yaw1.rc.s[0] = 2;
+    remote_ctrl_yaw1.rc.s[1] = 3;
 }
 
 void Decision::reveive_navi_status (uint8_t *data)
@@ -242,6 +254,29 @@ void Decision::Send_Gmae_Status (void)
     SendGameStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendGameStatusData,send_length-2,0xffff);
 
     memcpy(Navi_send_data, &SendGameStatusData, send_length);
+
+    HAL_UART_Transmit(&huart1, Navi_send_data, send_length, 0xFFF);
+  
+    memset(Navi_send_data, 0, send_length);
+}
+
+void Decision::Send_Bace_Status (void)
+{
+    uint8_t send_length;
+    send_length = sizeof(SendBaceStatusData);
+   SendBaceStatusData.HeaderFrame.sof = 0X5A;
+   SendBaceStatusData.HeaderFrame.len = send_length-6; //sizeof(SendGameStatusData.HeaderFrame);
+   SendBaceStatusData.HeaderFrame.id  = 0X01;
+   SendBaceStatusData.time_stamp = 0;
+
+   SendBaceStatusData.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendBaceStatusData.HeaderFrame),3,0xff);
+
+   SendBaceStatusData.data.flag = (can_receive.gimbal_receive.game_progress>>2)&1;//can_receive.gimbal_receive.game_progress;为1可以运动
+   SendBaceStatusData.data.chassis_cmd = chassis_cmd;//can_receive.gimbal_receive.game_time;0到中心点，1回家，2补弹
+
+   SendBaceStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendBaceStatusData,send_length-2,0xffff);
+
+    memcpy(Navi_send_data, &SendBaceStatusData, send_length);
 
     HAL_UART_Transmit(&huart1, Navi_send_data, send_length, 0xFFF);
   
