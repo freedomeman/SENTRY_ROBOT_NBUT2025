@@ -86,7 +86,7 @@ typedef __packed struct
 typedef __packed struct 
 {
 
-  HeaderFrame_t HeaderFrame;
+  HeaderFramr_t HeaderFrame;
   uint32_t time_stamp;
 
   __packed struct
@@ -101,7 +101,7 @@ typedef __packed struct
 typedef __packed struct 
 {
 
-  HeaderFrame_t HeaderFrame;
+  HeaderFramr_t HeaderFrame;
   uint32_t time_stamp;
 
   __packed struct

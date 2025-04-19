@@ -74,7 +74,7 @@ void Gimbal::init()
     //初始化初始状态为无力模式
     gimbal_mode = GIMBAL_ZERO_FORCE;
     last_gimbal_mode = gimbal_mode;
-    pitch_G =  9.8 ; //7.35;
+    pitch_G =  10.8;//9.8 ; //7.35;
     pitch_link = 0.07;
     yaw_fric_compent_firt = 0.02;
 

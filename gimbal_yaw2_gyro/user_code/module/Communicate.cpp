@@ -40,16 +40,17 @@ void Communicate::run()
 {
     //发送数据给视觉
     //vision_send_data(gimbal.vision_cmdid);
-    //decision.Send_Gmae_Status();
+    
     if (uart_switch == 0)
     {
-        decision.Send_Bace_Status();
+    decision.Send_Bace_Status();
         uart_switch = 1;
         /* code */
     }
     else
     {
-        decision.Send_Joint_Status();
+        //decision.Send_Joint_Status();
+		decision.Send_Gmae_Status();
         uart_switch = 0;
     }    
     // decision.Send_Bace_Status();
@@ -295,6 +296,10 @@ extern "C"
                 break;
             case CAN_TRIGGER_MOTOR_ID:
                 can_receive.get_shoot_motor_measure(2, rx_data);
+                detect_hook(CAN_TRIGGER_MOTOR_ID);
+                break;
+            case CAN_SECISION_BOARD_COM_ID:
+                can_receive.receive_robot_decision_receive_com(rx_data);
                 detect_hook(CAN_TRIGGER_MOTOR_ID);
                 break;
 

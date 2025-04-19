@@ -880,6 +880,12 @@ public:
     void get_remain_hp(uint16_t *remain_HP);
     //获取当前阵营颜色
     void get_color(uint8_t *color);
+    //获取关节上电情况
+    void get_power_mode(uint8_t *power_mode);
+    //获取被击打数据
+    void get_by_hurt(uint8_t *bt_hit);
+    //获取剩余发射子弹数量
+    void get_projectile_allowance_17mm(uint16_t *projectile_allowance);
 
     //是否被击打
     bool_t if_hit();

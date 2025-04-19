@@ -271,7 +271,7 @@ void Decision::Send_Bace_Status (void)
 
    SendBaceStatusData.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendBaceStatusData.HeaderFrame),3,0xff);
 
-   SendBaceStatusData.data.flag = (can_receive.gimbal_receive.game_progress>>2)&1;//can_receive.gimbal_receive.game_progress;为1可以运动
+   SendBaceStatusData.data.flag = 1;//(can_receive.gimbal_receive.game_progress>>2)&1;//can_receive.gimbal_receive.game_progress;为1可以运动
    SendBaceStatusData.data.chassis_cmd = chassis_cmd;//can_receive.gimbal_receive.game_time;0到中心点，1回家，2补弹
 
    SendBaceStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendBaceStatusData,send_length-2,0xffff);

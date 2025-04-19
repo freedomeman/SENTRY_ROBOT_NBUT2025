@@ -70,7 +70,7 @@ extern "C"
 #define YAW_ENCODE_PID_MAX_OUT 20.0f
 
 // pitch轴编码器PID 由编码器角度控制
-#define PITCH_ENCODE_PID_KP 22.0f
+#define PITCH_ENCODE_PID_KP 60.0f
 #define PITCH_ENCODE_PID_KI 0.03f
 #define PITCH_ENCODE_PID_KD 5.0f
 #define PITCH_ENCODE_PID_MAX_IOUT 1.0f

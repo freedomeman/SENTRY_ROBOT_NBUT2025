@@ -59,6 +59,7 @@ typedef enum
     CAN_COOLING_BOARM_COM_ID = 0x303,
     CAN_SHOOT_SPEED_BOARD_COM_ID = 0x304,
     CAN_UI_COM_ID = 0x305,
+    CAN_SECISION_BOARD_COM_ID = 0x306,
 
     //传输 导航数据
     CAN_Sendpark= 0x306,
@@ -146,6 +147,14 @@ typedef struct
 
 } gimbal_receive_t;
 
+typedef struct
+{
+    uint16_t hp;
+    uint8_t  power_mode;
+    uint8_t  by_hurt;
+    uint16_t allowance;
+}robot_decision_receive_t;
+
 class Can_receive
 {
 
@@ -162,6 +171,8 @@ public:
     //板间通信
     //云台接收信息
     gimbal_receive_t gimbal_receive;
+    //决策接收信息
+    robot_decision_receive_t robot_decision_receive;
     //云台发送
     gimbal_send_t gimbal_send;
     gimbal_send_yaw_t gimbal_send_yaw;
@@ -184,6 +195,7 @@ public:
     /*-----------------------板间通信函数------------------------*/
     void receive_cooling_and_id_board_com(uint8_t data[8]);
     void receive_shoot_speed_and_mode_board_com(uint8_t data[8]);
+    void receive_robot_decision_receive_com(uint8_t data[8]);
     void send_rc_board_com(int16_t ch_0, int16_t ch_2, int16_t ch_3, uint16_t v);            //发送遥控器数据
     void send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp32 gimbal_yaw_angle, int16_t pitch); //发送云台模式及状态
     void send_UI_com(bool_t auto_s, bool_t aim_s, bool_t fric_s, bool_t cover_s, uint8_t vision_cmdid, uint16_t v);   //发送UI数据

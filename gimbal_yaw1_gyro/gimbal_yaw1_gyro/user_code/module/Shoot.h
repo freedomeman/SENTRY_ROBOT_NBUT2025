@@ -27,7 +27,7 @@
 #include "Config.h"
 
 //snail摩擦轮射击速度
-#define shoot_pwm 1400
+#define shoot_pwm 1500
 #define stop_pwm  1100
 
 #define TRIGGER_CCW 1 //拨盘顺时针
@@ -87,8 +87,8 @@
 
 //卡弹时间 以及反转时间
 #define BLOCK_TRIGGER_SPEED 1.0f
-#define BLOCK_TIME 700
-#define REVERSE_TIME 500
+#define BLOCK_TIME 500
+#define REVERSE_TIME 300
 #define REVERSE_SPEED_LIMIT 13.0f
 
 #define PI_FOUR 0.78539816339744830961566084581988f

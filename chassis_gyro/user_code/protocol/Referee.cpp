@@ -381,6 +381,24 @@ void Referee::get_remain_hp(uint16_t *current_HP)
     *current_HP = robot_state.current_HP;
 }
 
+//获取各部分是否上电
+void Referee::get_power_mode(uint8_t *power_mode)
+{
+    *power_mode = robot_state.power_management_gimbal_output | robot_state.power_management_chassis_output<<1 | robot_state.power_management_shooter_output<<2;
+}
+
+//获取被击打数据
+void Referee::get_by_hurt(uint8_t *by_hit)
+{
+    *by_hit = robot_hurt_t.armor_type;
+}
+
+//获取剩余发射子弹数量
+void Referee::get_projectile_allowance_17mm(uint16_t *projectile_allowance)
+{
+    *projectile_allowance = projectile_allowance_t.projectile_allowance_17mm;
+}
+
 //是否被击打
 bool_t Referee::if_hit()
 {

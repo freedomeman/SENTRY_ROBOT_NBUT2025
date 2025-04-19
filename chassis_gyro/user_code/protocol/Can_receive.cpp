@@ -163,6 +163,32 @@ void Can_receive::send_cooling_and_id_board_com(uint16_t id1_17mm_cooling_limit,
     HAL_CAN_AddTxMessage(&BOARD_COM_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
 }
 
+void Can_receive::send_robot_massega_com(uint16_t hp, uint8_t power_mode, uint8_t by_hit, uint16_t projectile_allowance)
+{
+    robot_massega_send.robot_hp = hp;
+    robot_massega_send.robot_power_mode = power_mode;
+    robot_massega_send.robot_by_hit = by_hit;
+    robot_massega_send.robot_projectile_allowance = projectile_allowance;
+
+    uint32_t send_mail_box;
+    chassis_tx_message.StdId = CAN_SECISION_BOARD_COM_ID;
+    chassis_tx_message.IDE = CAN_ID_STD;
+    chassis_tx_message.RTR = CAN_RTR_DATA;
+    chassis_tx_message.DLC = 0x08;
+
+    chassis_can_send_data[0] = hp >> 8;
+    chassis_can_send_data[1] = hp ;
+    chassis_can_send_data[2] = power_mode ;
+    chassis_can_send_data[3] = by_hit ;
+    chassis_can_send_data[4] = projectile_allowance >> 8;
+    chassis_can_send_data[5] = projectile_allowance ;
+    chassis_can_send_data[6] = 0;
+    chassis_can_send_data[7] = 0;
+
+    HAL_CAN_AddTxMessage(&BOARD_COM_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
+
+}
+
 void Can_receive::send_17mm_speed_and_mode_board_com(uint16_t id1_17mm_speed_limit, uint16_t bullet_speed, uint8_t chassis_behaviour,uint8_t game_progress)
 {
     //数据填充

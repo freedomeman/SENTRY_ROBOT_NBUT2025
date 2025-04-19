@@ -36,6 +36,7 @@ typedef enum
   CAN_GIMBAL_BOARD_COM_ID = 0x102,
   CAN_COOLING_BOARM_COM_ID = 0x303 ,
   CAN_17MM_SPEED_BOARD_COM_ID = 0x304,
+  CAN_SECISION_BOARD_COM_ID = 0x306,
   CAN_UI_COM_ID = 0x305,
 
   //超级电容接收ID
@@ -110,6 +111,15 @@ typedef struct
 
 typedef struct
 {
+  uint16_t robot_hp;//机器人当前血量
+  uint8_t  robot_power_mode;//shooter:1bit；gimbal：2bit；chassis：3bit；1有电，2没电
+  uint8_t  robot_by_hit;//机器人受到伤害装甲板受伤
+  uint16_t robot_projectile_allowance;//剩余子弹数量
+
+}robot_massega_send_t;
+
+typedef struct
+{
   float cap_vot;              //电容电压
   float cap_percentage;       //超电百分比
   float cap_mode;             //超电模式
@@ -133,6 +143,8 @@ public:
   chassis_receive_t chassis_receive;
 
   chassis_send_t chassis_send;
+
+  robot_massega_send_t  robot_massega_send;
 
   //超电数据
   cap_receive_t cap_receive;
@@ -160,6 +172,8 @@ public:
   void send_cooling_and_id_board_com(uint16_t id1_17mm_cooling_limit, uint16_t id1_17mm_cooling_rate, uint16_t id1_17mm_cooling_heat, uint8_t color, uint8_t robot_id);
   //发送枪口速度及底盘模式
   void send_17mm_speed_and_mode_board_com(uint16_t id1_17mm_speed_limi, uint16_t bullet_speed, uint8_t chassis_behaviour,uint8_t temp_game_progress);
+  //发送决策用的部分信息
+  void send_robot_massega_com(uint16_t hp, uint8_t power_mode, uint8_t by_hit, uint16_t projectile_allowance);
 
   //发送超级电容设定功率
   void can_cmd_super_cap_power(uint16_t set_power,uint16_t buffer_power,uint8_t cap_mode);

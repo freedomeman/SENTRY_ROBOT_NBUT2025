@@ -228,6 +228,15 @@ void Can_receive::receive_shoot_speed_and_mode_board_com(uint8_t data[8])
     gimbal_receive.game_time = (uint16_t)(data[6] << 8 | data[7]);
 
 }
+
+void Can_receive::receive_robot_decision_receive_com(uint8_t data[8])
+{
+    robot_decision_receive.hp = (uint16_t)(data[0] << 8 | data[1]);
+    robot_decision_receive.power_mode = data[2] ;
+    robot_decision_receive.by_hurt = data[3] ;
+    robot_decision_receive.allowance = (uint16_t)(data[4] << 8 | data[5]);
+}
+
 void Can_receive::send_yaw_shoot_speed_and_mode_board_com(void)
 {
     uint32_t send_mail_box;

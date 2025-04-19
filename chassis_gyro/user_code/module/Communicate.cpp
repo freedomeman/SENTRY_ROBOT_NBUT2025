@@ -62,12 +62,18 @@ void Communicate::run()
     fp32 temp_bullet_speed;
     uint8_t temp_chassis_behaviour_mode;
     uint8_t temp_game_progress = referee.game_state.game_progress;
+    uint16_t temp_robot_hp, temp_projectile_allowance;
+    uint8_t temp_power_mode, temp_by_hit;
 	
     referee.get_shooter_id1_17mm_cooling_limit_and_heat(&temp_id1_17mm_cooling_limit, &temp_id1_17mm_cooling_heat);
     referee.get_shooter_id2_17mm_cooling_limit_and_heat(&temp_id1_17mm_cooling_limit, &temp_id2_17mm_cooling_heat);
     referee.get_shooter_id1_17mm_cooling_rate(&temp_id1_17mm_cooling_rate);
     referee.get_color(&temp_color);
     referee.get_robot_id(&temp_robot_id);
+    referee.get_remain_hp(&temp_robot_hp);
+    referee.get_power_mode(&temp_power_mode);
+    referee.get_by_hurt(&temp_by_hit);
+    referee.get_projectile_allowance_17mm(&temp_projectile_allowance);
     //referee.get_shooter_id1_17mm_speed_limit_and_bullet_speed(&temp_id1_17mm_speed_limit, &temp_bullet_speed);
     temp_chassis_behaviour_mode = chassis.chassis_behaviour_mode;
 
@@ -76,6 +82,8 @@ void Communicate::run()
                                               temp_color, temp_robot_id);
 
     can_receive.send_17mm_speed_and_mode_board_com(temp_id1_17mm_speed_limit, temp_bullet_speed, temp_chassis_behaviour_mode,temp_game_progress);
+
+    can_receive.send_robot_massega_com(temp_robot_hp,temp_power_mode,temp_by_hit,temp_projectile_allowance);
 
     //cap.cap_read_data(can_receive.cap_receive.input_vot, can_receive.cap_receive.cap_vot, can_receive.cap_receive.input_current,can_receive.cap_receive.target_power);
 //TODO _data这里最好使用指针赋值,减少计算量,后续需修改

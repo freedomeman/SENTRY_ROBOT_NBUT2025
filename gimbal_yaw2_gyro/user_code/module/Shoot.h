@@ -27,7 +27,7 @@
 #include "Config.h"
 
 //snail摩擦轮射击速度
-#define shoot_pwm 1400
+#define shoot_pwm 1900
 #define stop_pwm  1100
 
 #define TRIGGER_CCW 1 //拨盘顺时针
