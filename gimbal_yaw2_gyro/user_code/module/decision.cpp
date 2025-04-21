@@ -21,6 +21,7 @@ extern "C"
 Decision decision;
 extern Remote_control remote_control;
 extern Can_receive can_receive;
+extern Gimbal gimbal;
 
 void Decision::decision_init(void)
 {
@@ -169,16 +170,78 @@ void Decision::robot_set_control(void)
     }
     else if (robot_mode == SENTRY_CTRL)
     {
-
+        //sentry_mode_set();
         navi_set();
         /* code */
     }
     
 }
 
+//uint8_t hurt_direction=0;
 void Decision::sentry_mode_set (void)
 {
-    chassis_cmd = GOTO_FIGHT;
+    sentry_behavior = GOTO_FIGHT;
+    hp_last = hp_current;
+    hp_current = can_receive.robot_decision_receive.hp;
+    
+    if (yaw1_status.self_aiming_status == 1) //这时小yaw已经瞄准到敌人
+    {
+        sentry_behavior = IS_FIGHTING;
+        if (yaw1_status.yaw_encoder_angle >= 0.8)//小yaw到最右边
+        {
+            add_yaw_to_follow =0.8;
+            /* code */
+        }
+        else if(yaw1_status.yaw_encoder_angle <= -0.8)
+        {
+            add_yaw_to_follow =-0.8;
+        }
+        else
+        {
+            add_yaw_to_follow =0;
+        }
+        /* code */
+    }
+    if ((hp_current - hp_last) >= 2)//此时说明受到伤害
+    {
+        avoid_damage_time = AVOID_TIME;
+        //hurt_direction = can_receive.robot_decision_receive.by_hurt & 0x01;
+        // if ((can_receive.robot_decision_receive.by_hurt & 0x01) != 0)//说明第一快装甲受击
+        // {
+        //     add_yaw_to_counterattack = -gimbal.gimbal_pitch_motor.encode_angle + 0.785;//这里装甲板逆时针放置
+        //     /* code */
+        // }
+        if (using_small_gyroscope == 4)//已经关闭小陀螺
+        {
+            using_small_gyroscope = 1; //请求开启小陀螺
+            /* code */
+        }
+		can_receive.robot_decision_receive.by_hurt = 0;
+        /* code */
+    }
+    else
+    {
+        if (avoid_damage_time > 0)
+        {
+            avoid_damage_time --;
+            /* code */
+        }
+        if (avoid_damage_time == 0 && using_small_gyroscope == 2) //已经开启小陀螺，并且一段时间没有受到伤害
+        {
+            using_small_gyroscope = 3;//请求关闭小陀螺
+            /* code */
+        }
+        
+        
+        
+    }
+    if (can_receive.robot_decision_receive.hp <= LOW_HP) //如果血量低回家补血
+    {
+        sentry_behavior = GOTO_HOME ;
+        /* code */
+    }
+    
+    
 }
 
 void Decision::navi_set (void)

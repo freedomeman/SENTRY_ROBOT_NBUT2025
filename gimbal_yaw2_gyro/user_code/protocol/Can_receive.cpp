@@ -16,10 +16,12 @@ extern "C"
 
 #include "struct_typedef.h"
 #include "Communicate.h"
+#include "decision.h"
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern Communicate communicate;
+extern Decision decision;
 
 void Can_receive::init()
 {
@@ -231,6 +233,7 @@ void Can_receive::receive_shoot_speed_and_mode_board_com(uint8_t data[8])
 
 void Can_receive::receive_robot_decision_receive_com(uint8_t data[8])
 {
+    robot_decision_receive.hp_last = robot_decision_receive.hp;
     robot_decision_receive.hp = (uint16_t)(data[0] << 8 | data[1]);
     robot_decision_receive.power_mode = data[2] ;
     robot_decision_receive.by_hurt = data[3] ;
@@ -402,8 +405,8 @@ void Can_receive::send_SendPacket(SendPacketTwist_t& SendPacketTwist)
 //在这里增加一个板间通讯用于传输小yaw角度和小yaw模式，以便于大yaw能够帮助小yaw达到跟踪角度
 void Can_receive::receive_rc_board_yaw_mode(uint8_t data[8])
 {
-//    communicate.yaw1_mode.yaw_angle = (fp32)(int32_t)(data[0]<< 24 | (uint32_t)data[1] << 16 |(uint32_t)data[2] << 8 | (uint32_t)data[3])/ 1000;
-//    communicate.yaw1_mode.yaw_m = data[4];
+    decision.yaw1_status.yaw_encoder_angle = (fp32)(int32_t)(data[0]<< 24 | (uint32_t)data[1] << 16 |(uint32_t)data[2] << 8 | (uint32_t)data[3])/ 1000;
+    decision.yaw1_status.self_aiming_status = data[4];
 }
 
 //chassis_receive.gimbal_yaw_angle = (fp32)(int32_t)(data[2] << 24 | data[3] << 16 | data[4] << 8 | data[5]) / 1000;

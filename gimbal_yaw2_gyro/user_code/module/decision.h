@@ -4,6 +4,9 @@
 
 #include "remote_control.h"
 
+#define LOW_HP  100
+#define AVOID_TIME  1000
+
 typedef enum
 {
     ROBOT_ZERO_FORCE,
@@ -17,7 +20,8 @@ typedef enum
     GOTO_FIGHT,
     GOTO_HOME,
     GOTO_GET_SUPPLY,
-} chassis_cmd_e;
+    IS_FIGHTING,
+} sentry_behavior_e;
 
 
 
@@ -137,14 +141,22 @@ typedef struct
     /* data */
 }vset_to_remotset_t;
 
-
+typedef struct 
+{
+  float yaw_encoder_angle;
+  uint8_t self_aiming_status;
+}yaw1_status_t;
 
 class Decision
 {
 
 public:
     robot_mode_e robot_mode;
-    chassis_cmd_e chassis_cmd;
+    sentry_behavior_e sentry_behavior;
+
+    uint8_t chassis_cmd;
+
+    yaw1_status_t yaw1_status;
 
     const RC_ctrl_t   *remote_control_robot;
     RC_ctrl_t   *remote_control_robot_last;
@@ -161,10 +173,14 @@ public:
     SendBaceStatusData_t  SendBaceStatusData;
     vset_to_remotset_t  vset_to_remotset;
 
+    float add_yaw_to_counterattack , add_yaw_to_follow;
+    uint16_t avoid_damage_time , using_small_gyroscope , hp_current, hp_last;
+
     void remote_switch(void);
     void robot_set_mode(void);
     void robot_set_control(void);
     void decision_init(void);
+    void sentry_mode_set (void);
 
     const RC_ctrl_t* get_yaw2_ctrl_point(void);
     RC_ctrl_t* get_yaw2_ctrl_point_last(void);
@@ -176,7 +192,6 @@ public:
     void Send_Joint_Status (void);
     void Send_Bace_Status (void);
 
-    void sentry_mode_set (void);
     void navi_set (void);
 
 

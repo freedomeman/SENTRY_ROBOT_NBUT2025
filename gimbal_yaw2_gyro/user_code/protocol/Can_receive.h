@@ -150,6 +150,7 @@ typedef struct
 typedef struct
 {
     uint16_t hp;
+    uint16_t hp_last;
     uint8_t  power_mode;
     uint8_t  by_hurt;
     uint16_t allowance;

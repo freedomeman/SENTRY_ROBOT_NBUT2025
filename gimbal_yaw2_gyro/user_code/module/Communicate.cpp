@@ -88,6 +88,20 @@ void Communicate::run()
         /* code */
         ch_switch = 1;
     }
+    if (decision.using_small_gyroscope == 1 )
+    {
+        //temp_v = 512;
+        decision.using_small_gyroscope = 2;
+        /* code */
+    }
+    if (decision.using_small_gyroscope == 3)
+    {
+        //temp_v = 512;
+        decision.using_small_gyroscope = 4;
+        /* code */
+    }
+    
+    
     
 
     temp_gimbal_behaviour_mode = gimbal.gimbal_mode;
@@ -317,7 +331,9 @@ extern "C"
             //发射机构电机
            
 
-            
+            case CAN_YAW_MODE_ID:
+                can_receive.receive_rc_board_yaw_mode(rx_data);
+                break;
             
             case CAN_COVER_MOTOR_ID:
                 can_receive.get_shoot_motor_measure(3, rx_data);
