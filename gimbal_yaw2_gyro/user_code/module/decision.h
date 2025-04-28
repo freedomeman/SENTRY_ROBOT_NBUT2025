@@ -5,7 +5,11 @@
 #include "remote_control.h"
 
 #define LOW_HP  100
-#define AVOID_TIME  1000
+#define FALL_HP 400
+#define AVOID_TIME  2500
+
+#define MAX_YAW1_ANGLE  0.8f
+#define MIN_YAW1_ANGLE  -0.8f
 
 typedef enum
 {
@@ -17,10 +21,10 @@ typedef enum
 
 typedef enum
 {
-    GOTO_FIGHT,
-    GOTO_HOME,
-    GOTO_GET_SUPPLY,
-    IS_FIGHTING,
+    GOTO_FIGHT, //去中心点战斗
+    GOTO_HOME, //回家
+    GOTO_GET_SUPPLY, //获取补给
+    IS_FIGHTING, //正在战斗
 } sentry_behavior_e;
 
 
@@ -153,6 +157,7 @@ class Decision
 public:
     robot_mode_e robot_mode;
     sentry_behavior_e sentry_behavior;
+    sentry_behavior_e sentry_behavior_last;
 
     uint8_t chassis_cmd;
 
@@ -193,6 +198,12 @@ public:
     void Send_Bace_Status (void);
 
     void navi_set (void);
+    void injury_detection (void);
+    uint8_t reach_target (void);
+    uint8_t need_attack(void); 
+    uint8_t low_blood_is_or_not(void);
+    void is_fighting_ctrl(void);
+    void sentry_mode_set_control (void);
 
 
 };

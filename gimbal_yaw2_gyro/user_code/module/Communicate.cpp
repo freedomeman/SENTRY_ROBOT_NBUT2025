@@ -90,13 +90,13 @@ void Communicate::run()
     }
     if (decision.using_small_gyroscope == 1 )
     {
-        //temp_v = 512;
+        temp_v = 512;
         decision.using_small_gyroscope = 2;
         /* code */
     }
     if (decision.using_small_gyroscope == 3)
     {
-        //temp_v = 512;
+        temp_v = 512;
         decision.using_small_gyroscope = 4;
         /* code */
     }

@@ -33,6 +33,8 @@ void Decision::decision_init(void)
     vset_to_remotset.x_set = 180;
     vset_to_remotset.y_set = -280;
     vset_to_remotset.z_set = -280;
+
+    using_small_gyroscope = 4;
 }
 
 void Decision::robot_set_mode(void)
@@ -170,8 +172,16 @@ void Decision::robot_set_control(void)
     }
     else if (robot_mode == SENTRY_CTRL)
     {
-        //sentry_mode_set();
-        navi_set();
+        sentry_mode_set();
+        injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
+        sentry_mode_set_control();
+        if (sentry_behavior != IS_FIGHTING) //这里是为了屏蔽在去中心点时遇到敌人可以做击打，但不会设置到回家补血
+        {
+            navi_set();
+            /* code */
+        }
+        
+        
         /* code */
     }
     
@@ -181,29 +191,149 @@ void Decision::robot_set_control(void)
 void Decision::sentry_mode_set (void)
 {
     sentry_behavior = GOTO_FIGHT;
-    hp_last = hp_current;
-    hp_current = can_receive.robot_decision_receive.hp;
-    
-    if (yaw1_status.self_aiming_status == 1) //这时小yaw已经瞄准到敌人
+    if (sentry_behavior != IS_FIGHTING  )
     {
-        sentry_behavior = IS_FIGHTING;
-        if (yaw1_status.yaw_encoder_angle >= 0.8)//小yaw到最右边
+        if (need_attack() == 1)
         {
-            add_yaw_to_follow =0.8;
+            sentry_behavior_last = sentry_behavior; //行为切换保存
+            sentry_behavior = IS_FIGHTING;
             /* code */
-        }
-        else if(yaw1_status.yaw_encoder_angle <= -0.8)
-        {
-            add_yaw_to_follow =-0.8;
-        }
-        else
-        {
-            add_yaw_to_follow =0;
         }
         /* code */
     }
-    if ((hp_current - hp_last) >= 2)//此时说明受到伤害
+    else if (sentry_behavior == IS_FIGHTING)
     {
+        if (need_attack() == 0) //小yaw未识别到目标
+        {
+            sentry_behavior = sentry_behavior_last; //丢失目标后，恢复行为
+            /* code */
+        }
+        /* code */
+    }
+
+    if (low_blood_is_or_not() == 1) //血量过低需要回家补血
+    {
+        sentry_behavior = GOTO_HOME;
+        /* code */
+    }
+    if (sentry_behavior == GOTO_HOME)
+    {
+        if (can_receive.robot_decision_receive.hp == FALL_HP)//回家补满血量
+        {
+            sentry_behavior = GOTO_FIGHT;
+            /* code */
+        }
+        
+        /* code */
+    }
+
+}
+
+uint8_t Decision::low_blood_is_or_not(void)
+{
+    if (can_receive.robot_decision_receive.hp <= LOW_HP) //小于安全血量
+    {
+        return 1;
+        /* code */
+    }
+    return 0;
+    
+}
+
+uint8_t Decision::need_attack(void) //这里判断是否需要攻击
+{
+    if (yaw1_status.self_aiming_status == 1) //小头识别到敌人
+    {
+        return 1;
+        /* code */
+    }
+    return 0;
+    
+}
+        
+uint8_t Decision::reach_target (void)
+{
+    if (receivenavistate.data.speed_vector.speedx == 0 && receivenavistate.data.speed_vector.speedy == 0)//说明此时已经导航到目标点
+    {
+        return 1;
+        /* code */
+    }
+    return 0 ;
+
+    
+}
+
+void Decision::sentry_mode_set_control (void)
+{
+    if (sentry_behavior == GOTO_HOME)
+    {
+        chassis_cmd = 1;
+        /* code */
+    }
+    if (sentry_behavior == GOTO_FIGHT) //这里后续增加根据时间判断是否去堡垒还是中心点
+    {
+        chassis_cmd = 0;
+        /* code */
+    }
+    if (sentry_behavior == IS_FIGHTING)
+    {
+        is_fighting_ctrl();
+        /* code */
+    }
+    
+    
+    
+}
+
+float yaw2_follow_angle=0;
+void Decision::is_fighting_ctrl(void)
+{
+    remote_ctrl_yaw2.rc.ch[2] = 0;
+    remote_ctrl_yaw2.rc.ch[3] = 0;
+    if (yaw1_status.yaw_encoder_angle >= MAX_YAW1_ANGLE)
+    {
+        yaw2_follow_angle = 0.6;
+        /* code */
+    }
+    if (yaw1_status.yaw_encoder_angle <= MIN_YAW1_ANGLE)
+    {
+        yaw2_follow_angle = -0.6;
+        /* code */
+    }
+    if (yaw2_follow_angle > 0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[1] = 90;
+        yaw2_follow_angle -= 90*0.01;
+        /* code */
+    }
+    else if (yaw2_follow_angle < -0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[1] = -90;
+        yaw2_follow_angle += 90*0.01;
+        /* code */
+    }
+    else if ( -0.2 < yaw2_follow_angle < 0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[1] = 0;
+        /* code */
+    }
+    
+    
+    
+}
+
+void Decision::injury_detection (void)
+{
+    if (hp_current != can_receive.robot_decision_receive.hp)
+    {
+        hp_last = hp_current;
+        hp_current = can_receive.robot_decision_receive.hp;
+        /* code */
+    }
+    
+    if ( (can_receive.robot_decision_receive.hp_last - can_receive.robot_decision_receive.hp) >= 2 )//此时说明受到伤害
+    {
+        //hp_last = hp_current;
         avoid_damage_time = AVOID_TIME;
         //hurt_direction = can_receive.robot_decision_receive.by_hurt & 0x01;
         // if ((can_receive.robot_decision_receive.by_hurt & 0x01) != 0)//说明第一快装甲受击
@@ -219,29 +349,16 @@ void Decision::sentry_mode_set (void)
 		can_receive.robot_decision_receive.by_hurt = 0;
         /* code */
     }
-    else
+    else if(avoid_damage_time > 0)//没有受伤
     {
-        if (avoid_damage_time > 0)
+        avoid_damage_time --;
+        if (avoid_damage_time == 1) //一定时间没有受伤
         {
-            avoid_damage_time --;
-            /* code */
-        }
-        if (avoid_damage_time == 0 && using_small_gyroscope == 2) //已经开启小陀螺，并且一段时间没有受到伤害
-        {
-            using_small_gyroscope = 3;//请求关闭小陀螺
+            using_small_gyroscope = 3; //请求关闭小陀螺
             /* code */
         }
         
-        
-        
     }
-    if (can_receive.robot_decision_receive.hp <= LOW_HP) //如果血量低回家补血
-    {
-        sentry_behavior = GOTO_HOME ;
-        /* code */
-    }
-    
-    
 }
 
 void Decision::navi_set (void)
@@ -322,6 +439,8 @@ void Decision::Send_Gmae_Status (void)
   
     memset(Navi_send_data, 0, send_length);
 }
+
+
 
 void Decision::Send_Bace_Status (void)
 {
