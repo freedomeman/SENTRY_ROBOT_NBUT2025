@@ -50,6 +50,7 @@ float error;
 float error_ki=0;
 float error_kd=0;
 float error_last=0;
+extern float angle , add_angle , add_yaw , patrol_follow_rpm;
 
 void Gimbal::set_pid()
 {
@@ -606,9 +607,12 @@ void Gimbal::gimbal_chassis_control(fp32 *yaw, fp32 *pitch)
         rc_deadband_limit(gimbal_RC->rc.ch[YAW_CHANNEL], yaw_channel, RC_DEADBAND);
         rc_deadband_limit(gimbal_RC->rc.ch[PITCH_CHANNEL], pitch_channel, RC_DEADBAND);
 
-        *yaw = yaw_channel * YAW_RC_SEN + gimbal_RC->mouse.x * YAW_MOUSE_SEN + decision.add_yaw_to_follow;
+        *yaw = yaw_channel * YAW_RC_SEN + gimbal_RC->mouse.x * YAW_MOUSE_SEN ;
         *pitch = pitch_channel * PITCH_RC_SEN + gimbal_RC->mouse.y * PITCH_MOUSE_SEN;
 
+        *yaw += add_yaw;
+        *yaw += patrol_follow_rpm;
+        patrol_follow_rpm = 0;
         //掉头控制
         turn_around_control(yaw);
     }

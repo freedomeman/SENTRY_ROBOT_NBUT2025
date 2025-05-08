@@ -27,7 +27,20 @@ typedef enum
     IS_FIGHTING, //正在战斗
 } sentry_behavior_e;
 
+typedef enum
+{
+    PATROL,
+    FIGHT,
+    FREE,
+} behavior_e;
 
+typedef enum
+{
+    INIT,
+    MID,
+    HOME,
+    FORTRESS,    
+} location_e;
 
 typedef __packed struct 
 {
@@ -159,6 +172,9 @@ public:
     sentry_behavior_e sentry_behavior;
     sentry_behavior_e sentry_behavior_last;
 
+    behavior_e behavior;
+    location_e location;
+
     uint8_t chassis_cmd;
 
     yaw1_status_t yaw1_status;
@@ -179,6 +195,7 @@ public:
     vset_to_remotset_t  vset_to_remotset;
 
     float add_yaw_to_counterattack , add_yaw_to_follow;
+    float yaw2_follow_angle;
     uint16_t avoid_damage_time , using_small_gyroscope , hp_current, hp_last;
 
     void remote_switch(void);
@@ -186,6 +203,11 @@ public:
     void robot_set_control(void);
     void decision_init(void);
     void sentry_mode_set (void);
+    uint8_t find_armi(void);
+    void set_mode(void);
+    void set_contrl(void);
+    void patrol(void);
+    void fight(void);
 
     const RC_ctrl_t* get_yaw2_ctrl_point(void);
     RC_ctrl_t* get_yaw2_ctrl_point_last(void);

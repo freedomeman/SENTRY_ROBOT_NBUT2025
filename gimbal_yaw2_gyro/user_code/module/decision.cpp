@@ -22,6 +22,7 @@ Decision decision;
 extern Remote_control remote_control;
 extern Can_receive can_receive;
 extern Gimbal gimbal;
+float zhuangjiafangxiang[4] = {0 , 1.57 , 3.14 , -1.57};
 
 void Decision::decision_init(void)
 {
@@ -168,24 +169,198 @@ void Decision::robot_set_control(void)
         remote_ctrl_yaw1.rc.ch[2] = 0;
         remote_ctrl_yaw1.rc.ch[3] = 0;
         remote_ctrl_yaw1.rc.ch[4] = 0;
+
+        location =INIT;
+        behavior =FREE;
         /* code */
     }
     else if (robot_mode == SENTRY_CTRL)
     {
-        sentry_mode_set();
-        injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
-        sentry_mode_set_control();
-        if (sentry_behavior != IS_FIGHTING) //这里是为了屏蔽在去中心点时遇到敌人可以做击打，但不会设置到回家补血
-        {
-            navi_set();
-            /* code */
-        }
-        
-        
+        // sentry_mode_set();
+         injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
+        // sentry_mode_set_control();
+        // if (sentry_behavior != IS_FIGHTING) //这里是为了屏蔽在去中心点时遇到敌人可以做击打，但不会设置到回家补血
+        // {
+        //     navi_set();
+        //     /* code */
+        // }
+        set_mode();
+        set_contrl();
+        navi_set();
+        remote_ctrl_yaw1.rc.s[0] = 1;
         /* code */
     }
     
 }
+
+uint8_t Decision::find_armi(void)
+{
+   return yaw1_status.self_aiming_status;
+}
+
+uint8_t mode_sw=0;
+void Decision::set_mode(void)
+{
+    if (can_receive.robot_decision_receive.hp>=150 && mode_sw == 0 )
+	{
+		location = MID;
+		if (reach_target()==1)
+		{
+			if (find_armi() == 0)
+			{
+				behavior = PATROL;
+			}
+			
+			if (find_armi() == 1)
+			{
+				behavior = FIGHT;
+			}
+		}
+		else
+		{
+			behavior = FREE;
+		}
+	}
+	else if (can_receive.robot_decision_receive.hp<=100)
+	{
+		location = HOME;
+		behavior = FREE;
+        mode_sw = 1;
+		
+	}
+    if (mode_sw == 1)
+    {
+        if (can_receive.robot_decision_receive.hp>300)
+        {
+            mode_sw = 0;
+            /* code */
+        }
+        /* code */
+    }
+    
+
+    
+    
+}
+
+void Decision::set_contrl(void)
+{
+    if (location == HOME)
+    {
+        chassis_cmd = 1;
+        /* code */
+    }
+    if (location == MID)
+    {
+        chassis_cmd = 0;
+        /* code */
+    }
+    if (behavior == FREE)
+    {
+        /* code */
+    }
+    if (behavior == FIGHT)
+    {
+        fight();
+        /* code */
+    }
+    if (behavior == PATROL)
+    {
+        patrol();
+        /* code */
+    }
+}
+
+float angle , add_angle , add_yaw , patrol_follow_rpm;
+void Decision::patrol(void)
+{
+    static int diraction=0;
+    
+    if (can_receive.robot_decision_receive.hp != can_receive.robot_decision_receive.hp_last)//受击检测
+    {
+        diraction = can_receive.robot_decision_receive.by_hurt;
+        angle = gimbal.gimbal_yaw_motor.encode_angle;
+        add_angle = zhuangjiafangxiang[diraction] - angle;
+        /*---计算一个最小的追踪方向*/
+        if (add_angle > 0)
+        {
+            if ((6.28 - add_angle) < 3.14) 
+            {
+                add_angle = - (6.28 - add_angle);
+                /* code */
+            }
+            
+            /* code */
+        }
+        else if (add_angle < 0)
+        {
+            if ((6.28 + add_angle) < 3.14 )
+            {
+                add_angle =  (6.28 + add_angle);
+                /* code */
+            }
+            
+            /* code */
+        }
+        /* code */
+    }
+    if ( -0.2 < add_angle && add_angle < 0.2)
+    {
+        add_yaw = 0;
+		add_angle = 0;
+        patrol_follow_rpm = 0.005;
+        /* code */
+    }
+    else
+    {
+        patrol_follow_rpm = 0;
+        if (add_angle > 0)
+        {
+            add_yaw = 0.005 ;
+            add_angle -= 0.005;
+            /* code */
+        }
+        else
+        {
+            add_yaw = -0.005 ;
+            add_angle += 0.005;
+        }
+    }
+    
+    //remote_ctrl_yaw2.rc.ch[0] = 180;
+}
+
+void Decision::fight(void)
+{
+    if (yaw1_status.yaw_encoder_angle >= MAX_YAW1_ANGLE)
+    {
+        yaw2_follow_angle = 0.6;
+        /* code */
+    }
+    if (yaw1_status.yaw_encoder_angle <= MIN_YAW1_ANGLE)
+    {
+        yaw2_follow_angle = -0.6;
+        /* code */
+    }
+    if (yaw2_follow_angle > 0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[0] = 90;
+        yaw2_follow_angle -= 90*0.01;
+        /* code */
+    }
+    else if (yaw2_follow_angle < -0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[0] = -90;
+        yaw2_follow_angle += 90*0.01;
+        /* code */
+    }
+    else if ( -0.2 < yaw2_follow_angle < 0.2)
+    {
+        remote_ctrl_yaw2.rc.ch[0] = 0;
+        /* code */
+    }
+}
+
 
 //uint8_t hurt_direction=0;
 void Decision::sentry_mode_set (void)
@@ -346,7 +521,7 @@ void Decision::injury_detection (void)
             using_small_gyroscope = 1; //请求开启小陀螺
             /* code */
         }
-		can_receive.robot_decision_receive.by_hurt = 0;
+		//can_receive.robot_decision_receive.by_hurt = 0;
         /* code */
     }
     else if(avoid_damage_time > 0)//没有受伤
@@ -376,7 +551,7 @@ void Decision::navi_set (void)
     remote_ctrl_yaw1.rc.ch[2] = 0;
     remote_ctrl_yaw1.rc.ch[3] = 0;
     remote_ctrl_yaw1.rc.ch[4] = 0;
-    remote_ctrl_yaw1.rc.s[0] = 2;
+    remote_ctrl_yaw1.rc.s[0] = 1;
     remote_ctrl_yaw1.rc.s[1] = 3;
 }
 

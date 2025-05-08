@@ -103,7 +103,7 @@
 #define NORMAL_MAX_CHASSIS_SPEED_Z 14.0f
 
 //原地旋转小陀螺下Z轴转速
-#define TOP_WZ_ANGLE_STAND 5.0f
+#define TOP_WZ_ANGLE_STAND 8.0f
 //移动状态下小陀螺转速
 #define TOP_WZ_ANGLE_MOVE 5.0f
 
