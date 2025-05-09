@@ -21,6 +21,9 @@ public:
     fp32 current_set;
     int16_t current_give;
 
+    fp32 PowerPrediction; //预测的功率
+    fp32 Prediction_Parameter[6];  //功率预测系数_中科大
+
     void init(const motor_measure_t *motor_measure_);
 } ;
 

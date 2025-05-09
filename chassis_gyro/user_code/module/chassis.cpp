@@ -106,6 +106,44 @@ void Chassis::init()
     z.min_speed = -NORMAL_MAX_CHASSIS_SPEED_Z;
     z.max_speed = NORMAL_MAX_CHASSIS_SPEED_Z;
 
+    chassis_motive_motor[0].Prediction_Parameter[0]= 0.6641993430428782f   ;    //功率预测参数初始化_中科大
+    chassis_motive_motor[0].Prediction_Parameter[1]= 0.006444295981325497f   ;
+    chassis_motive_motor[0].Prediction_Parameter[2]= 0.0001423857166749977f   ;
+    chassis_motive_motor[0].Prediction_Parameter[3]= 0.01764443017662443f   ;
+    chassis_motive_motor[0].Prediction_Parameter[4]= 0.16501438467529175f   ;
+    chassis_motive_motor[0].Prediction_Parameter[5]= 3.0967217636825096e-05f   ;
+
+    chassis_motive_motor[1].Prediction_Parameter[0]= 0.6641993430428782f   ;
+    chassis_motive_motor[1].Prediction_Parameter[1]= 0.006444295981325497f   ;
+    chassis_motive_motor[1].Prediction_Parameter[2]= 0.0001423857166749977f   ;
+    chassis_motive_motor[1].Prediction_Parameter[3]= 0.01764443017662443f   ;
+    chassis_motive_motor[1].Prediction_Parameter[4]= 0.16501438467529175f  ;
+    chassis_motive_motor[1].Prediction_Parameter[5]= 3.0967217636825096e-05f   ;
+
+    chassis_motive_motor[2].Prediction_Parameter[0]= 0.6641993430428782f   ;
+    chassis_motive_motor[2].Prediction_Parameter[1]= 0.006444295981325497f   ;
+    chassis_motive_motor[2].Prediction_Parameter[2]= 0.0001423857166749977f   ;
+    chassis_motive_motor[2].Prediction_Parameter[3]= 0.01764443017662443f   ;
+    chassis_motive_motor[2].Prediction_Parameter[4]= 0.16501438467529175f   ;
+    chassis_motive_motor[2].Prediction_Parameter[5]= 3.0967217636825096e-05f   ;
+
+    chassis_motive_motor[3].Prediction_Parameter[0]= 0.6641993430428782f   ;
+    chassis_motive_motor[3].Prediction_Parameter[1]= 0.006444295981325497f   ;
+    chassis_motive_motor[3].Prediction_Parameter[2]= 0.0001423857166749977f   ;
+    chassis_motive_motor[3].Prediction_Parameter[3]= 0.01764443017662443f   ;
+    chassis_motive_motor[3].Prediction_Parameter[4]= 0.16501438467529175f   ;
+    chassis_motive_motor[3].Prediction_Parameter[5]= 3.0967217636825096e-05f  ;
+
+//初始化底盘功率控制_期望缓冲能量值—中科大&港科
+    chassis_power_buff_set = 55.0f;
+    //初始化底盘功率控制_期望功率—中科大&港科
+    expected_power=0.0f; 
+    //初始化功率控制后的电流_中科大&港科
+    newTorqueCurrent[0]=0.0f;
+    newTorqueCurrent[1]=0.0f;
+    newTorqueCurrent[2]=0.0f;
+    newTorqueCurrent[3]=0.0f;
+
     //更新一下数据
     feedback_update();
 }
@@ -308,7 +346,7 @@ void Chassis::solve()
     }
 
     //功率控制
-    power_ctrl();
+    //power_ctrl();
 
     //计算pid
     for (i = 0; i < 4; i++)
@@ -858,4 +896,170 @@ fp32 Chassis::motor_ecd_to_angle_change(uint16_t ecd, uint16_t offset_ecd)
     }
 
     return relative_ecd * MOTOR_ECD_TO_RAD;
+}
+
+float ture_power , Ka[100] , Ka_ture;
+int my_i=0 , my_for_i = 0;
+void Chassis::power_ctrl_v2(void) //fabsf()
+{
+    if (chassis_power_buff < 60)
+    {
+            //ture_power / (A * int_to_current)
+            ture_power = 80 + (60 - chassis_power_buff);
+            Ka[my_i] = ture_power / total_current_last;
+            my_i ++;
+            if (my_i == 99)
+            {
+                my_i = 0;
+                /* code */
+            }
+            
+            /* code */
+        /* code */
+    }
+    if (chassis_behaviour_mode == CHASSIS_ZERO_FORCE && last_chassis_behaviour_mode != CHASSIS_ZERO_FORCE)
+    {
+        
+        while (my_for_i <99)
+        {
+            Ka_ture += Ka[my_for_i];
+            my_for_i ++;
+            /* code */
+        }
+        my_for_i = 0;
+        Ka_ture = Ka_ture / 99;
+        
+        /* code */
+    }
+    
+    
+    total_current_last =  (fabsf(chassis_motive_motor[0].current_set) + fabsf(chassis_motive_motor[1].current_set) + fabsf(chassis_motive_motor[2].current_set) + fabsf(chassis_motive_motor[3].current_set) ) * int_to_current ;
+
+    
+}
+
+void Chassis::power_ctrl_v3()
+{
+    // if(chassis_power_buff<30.0f)
+    // expected_power = chassis_power_limit-20.0f;
+
+    //测试代码
+    expected_power=150.0f;
+
+    fp32 sumPowerRequired = 0.0f;       //不包括负功率的电机功率需求和
+    fp32 omega_error[4];                //四个电机的期望转速与实际转速的差
+    fp32 sum_error= 0.0f;               //转速差值的和
+    fp32 errorConfidence= 0.0f;         //误差置信度，用于功率
+     
+    for (uint8_t i =0;i<4;i++)    // 底盘功率预测
+    {  
+        fp32 current=chassis_motive_motor[i].current_set*(20.0f/16384.0f);                 //电机数据预处理
+        fp32 omega = (chassis_motive_motor[i].motor_measure->speed_rpm)*(2.0f*PI/60.0f);
+     
+
+        chassis_motive_motor[i].PowerPrediction =
+        chassis_motive_motor[i].Prediction_Parameter[0]+
+        chassis_motive_motor[i].Prediction_Parameter[1]* current+
+        chassis_motive_motor[i].Prediction_Parameter[2]* omega+
+        chassis_motive_motor[i].Prediction_Parameter[3]* omega*current+
+        chassis_motive_motor[i].Prediction_Parameter[4]* current*current+
+        chassis_motive_motor[i].Prediction_Parameter[5]* omega*omega;
+
+    }
+
+     //计算预测的底盘总功率
+    power_sum=chassis_motive_motor[0].PowerPrediction + chassis_motive_motor[1].PowerPrediction+
+              chassis_motive_motor[2].PowerPrediction + chassis_motive_motor[3].PowerPrediction;
+
+    for(int i=0; i<4; i++)              //计算转速差
+    {
+        omega_error[i]=  (fabs(chassis_motive_motor[i].speed_set -chassis_motive_motor[i].speed)/M3508_MOTOR_RPM_TO_VECTOR)*(2.0f*PI/60.0f);
+       
+        if ( (chassis_motive_motor[i].PowerPrediction==0.0f)|| chassis_motive_motor[i].PowerPrediction < 0.0f)
+        {
+        expected_power += fabs(chassis_motive_motor[i].PowerPrediction);          //// 负功率代表能量回收，将其绝对值加入可用功率
+        }                                                                          
+        else
+        {
+            sum_error += omega_error[i];
+            sumPowerRequired += chassis_motive_motor[i].PowerPrediction;  //计算 不包括负功率的电机功率需求和
+        }   
+    }
+
+    if(expected_power < power_sum)    //预测功率超过裁判系统功率，进行功率控制
+    {
+
+        fp32 a,b,c,delta,sqrt_d;        //衰减系数current_attenuation_coeff是一个一元二次方程的解，a是方程的二次项系数，一次项系数，c是常数项  Ax²+Bx+C = 0,
+
+        if (sum_error > 20.0f)    //sum_error大于2，置信度为1，小于15置信度为0，中间值另外计算
+        {
+            errorConfidence = 1.0f;
+        }
+        else if (sum_error >15.0f)
+        {
+            errorConfidence = fp32_constrain( (sum_error-15.0f)/(20.0f-15.0f), 0.0f, 1.0f );   
+        }
+        else
+        {
+            errorConfidence = 0.0f;
+        }
+    
+        for(int i=0;i<4;i++)
+        {  
+            if ( chassis_motive_motor[i].PowerPrediction==0.0f ||chassis_motive_motor[i].PowerPrediction < 0.0f)  //电机功率为零或为负，不进行控制
+            {
+                newTorqueCurrent[i] = chassis_motive_motor[i].current_set;
+                continue;
+            }  
+    
+            //利用置信度errorConfidence，和相关计算值 powerWeight_Error，powerWeight_Prop 计算各个电机的功率分配权重powerWeight
+             float powerWeight_Error  = (fabs(chassis_motive_motor[i].speed_set -chassis_motive_motor[i].speed)/M3508_MOTOR_RPM_TO_VECTOR)*(2.0f*PI/60.0f)/ sum_error;
+             float powerWeight_Prop   = chassis_motive_motor[i].PowerPrediction  / sumPowerRequired ;
+             float powerWeight        = errorConfidence * powerWeight_Error + (1.0f - errorConfidence) * powerWeight_Prop;
+
+            
+            //计算方程参数并解方程
+
+            a=  chassis_motive_motor[i].Prediction_Parameter[4];
+
+            b=  chassis_motive_motor[i].Prediction_Parameter[1]  +  
+                chassis_motive_motor[i].Prediction_Parameter[3]  * chassis_motive_motor[i].motor_measure->speed_rpm*(2.0f*PI/60.0f);
+        
+            c=  chassis_motive_motor[i].Prediction_Parameter[0] - powerWeight * expected_power+
+                chassis_motive_motor[i].Prediction_Parameter[2] * chassis_motive_motor[i].motor_measure->speed_rpm*(2.0f*PI/60.0f) +
+                chassis_motive_motor[i].Prediction_Parameter[5] * chassis_motive_motor[i].motor_measure->speed_rpm*(2.0f*PI/60.0f) * 
+                chassis_motive_motor[i].motor_measure->speed_rpm*(2.0f*PI/60.0f);
+        
+            delta= (b*b)-(4*a*c);
+            sqrt_d=sqrt(delta);  //开根号
+
+            if(delta==0.0f)
+            {
+
+                newTorqueCurrent[i] = ((-b)/(2*a))*(16384.0f/20.0f);
+            }
+            else if(delta>0.0f)
+            {
+
+                newTorqueCurrent[i] = chassis_motive_motor[i].current_give > 0.0f ? ((-b+sqrt_d)/(2*a))*(16384.0f/20.0f)
+                                                                                  : ((-b-sqrt_d)/(2*a))*(16384.0f/20.0f);
+
+            }
+            else
+            {
+                newTorqueCurrent[i] = ((-b)/(2*a))*(16384.0f/20.0f);
+            }
+            
+            newTorqueCurrent[i] = fp32_constrain(newTorqueCurrent[i], -6000.0f, 6000.0f ); //输出限幅
+
+            chassis_motive_motor[i].current_set = newTorqueCurrent[i];                     //将得到的重分配电流值 传给电机
+ 
+             
+        }
+        
+
+    
+    }
+    
+
 }

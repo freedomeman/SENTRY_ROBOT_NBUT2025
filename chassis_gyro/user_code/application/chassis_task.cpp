@@ -32,6 +32,7 @@ void chassis_task(void *pvParameters) {
       //解算
       chassis.solve();
       //功率控制
+      chassis.power_ctrl_v3();
       //chassis.power_ctrl();
       //电流输出
       chassis.output();

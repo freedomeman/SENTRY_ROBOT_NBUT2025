@@ -173,6 +173,8 @@
 #define BUFFER_TOTAL_CURRENT_LIMIT 16000.0f     //16000
 #define POWER_TOTAL_CURRENT_LIMIT 12000.0f      //20000
 
+#define int_to_current  0.0092241314354f
+
 typedef enum
 {
     CHASSIS_ZERO_FORCE,                  //底盘表现为无力,底盘电机电流控制值为0,应用于遥控器掉线或者需要底盘上电时方便推动的场合
@@ -248,11 +250,17 @@ public:
     uint8_t cap_mode;   //超电模式状态机
     fp32 cap_increase;  //超电增量
     fp32 total_current; //输出总电流
+    fp32 total_current_last; //输出总电流
     fp32 total_power;   //计算得出的理论总功率
     fp32 chassis_power_limit;  //获取底盘功率限制
     fp32 chassis_power_buff;    //获取底盘缓存
     fp32 chassis_power_limit_chag; 
     fp32 chassis_power;         //获取底盘实时功率
+
+    fp32 chassis_power_buff_set; //设置目标缓冲能量值,中科大功率控制
+    fp32 expected_power;   //底盘功率控制_限制后的期望功率
+    fp32 power_sum;    //底盘预测总功率
+    fp32 newTorqueCurrent[4]; //功率控制后的输出电流
 
     //任务流程
     void init();
@@ -293,6 +301,10 @@ public:
     void chassis_vector_to_mecanum_wheel_speed(fp32 wheel_speed[4]);
 
     fp32 motor_ecd_to_angle_change(uint16_t ecd, uint16_t offset_ecd);
+
+    void power_ctrl_v2(void);
+
+    void power_ctrl_v3();
 };
 
 
