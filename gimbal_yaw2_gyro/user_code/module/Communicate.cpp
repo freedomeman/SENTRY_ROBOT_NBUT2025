@@ -25,6 +25,7 @@ extern bool_t if_identify_target;
 extern bool_t auto_switch;
 extern Shoot shoot;
 extern Decision decision;
+extern float patrol_move_flag;//这个用于巡逻时省电的
 
 void Communicate::init()
 {

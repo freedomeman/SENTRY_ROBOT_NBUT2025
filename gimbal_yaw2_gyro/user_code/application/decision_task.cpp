@@ -10,6 +10,7 @@ void decision_task(void *pvParameters)
 
     decision.remote_switch();
     decision.robot_set_control();
+    //(decision.ctrl_buff[PATROL].*ctrl_ptr)();
     vTaskDelay(DECISION_DELAY_TIME);
         /* code */
     }

@@ -24,6 +24,9 @@ extern Can_receive can_receive;
 extern Gimbal gimbal;
 float zhuangjiafangxiang[4] = {0 , 1.57 , 3.14 , -1.57};
 
+float angle , add_angle , add_yaw , patrol_follow_rpm , patrol_time ;
+float patrol_move_flag ;
+
 void Decision::decision_init(void)
 {
     remote_control_robot = remote_control.get_remote_control_point();
@@ -36,6 +39,10 @@ void Decision::decision_init(void)
     vset_to_remotset.z_set = -280;
 
     using_small_gyroscope = 4;
+
+    //ctrl_buff.behavior = PATROL;
+    //ctrl_buff_register(PATROL,&Decision::patrol,&Decision::patrol_mode_sw);
+
 }
 
 void Decision::robot_set_mode(void)
@@ -177,7 +184,7 @@ void Decision::robot_set_control(void)
     else if (robot_mode == SENTRY_CTRL)
     {
         // sentry_mode_set();
-         injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
+        // injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
         // sentry_mode_set_control();
         // if (sentry_behavior != IS_FIGHTING) //这里是为了屏蔽在去中心点时遇到敌人可以做击打，但不会设置到回家补血
         // {
@@ -187,9 +194,12 @@ void Decision::robot_set_control(void)
         set_mode();
         set_contrl();
         navi_set();
-        remote_ctrl_yaw1.rc.s[0] = 1;
+        remote_ctrl_yaw1.rc.s[0] = 2;
         /* code */
     }
+
+    //调试用
+    //ctrl_buff[PATROL].ctrl_ptr();
     
 }
 
@@ -201,9 +211,9 @@ uint8_t Decision::find_armi(void)
 uint8_t mode_sw=0;
 void Decision::set_mode(void)
 {
-    if (can_receive.robot_decision_receive.hp>=150 && mode_sw == 0 )
+    if (can_receive.robot_decision_receive.hp>100 && mode_sw == 0 )
 	{
-		location = MID;
+		//location = MID;
 		if (reach_target()==1)
 		{
 			if (find_armi() == 0)
@@ -237,6 +247,13 @@ void Decision::set_mode(void)
         }
         /* code */
     }
+    if (behavior != PATROL)
+    {
+        add_angle = 0;
+        add_yaw = 0;
+        /* code */
+    }
+    
     
 
     
@@ -255,6 +272,11 @@ void Decision::set_contrl(void)
         chassis_cmd = 0;
         /* code */
     }
+    if (location == FORTRESS)
+    {
+        chassis_cmd = 2;
+        /* code */
+    }
     if (behavior == FREE)
     {
         /* code */
@@ -271,63 +293,101 @@ void Decision::set_contrl(void)
     }
 }
 
-float angle , add_angle , add_yaw , patrol_follow_rpm;
+
 void Decision::patrol(void)
 {
-    static int diraction=0;
-    
-    if (can_receive.robot_decision_receive.hp != can_receive.robot_decision_receive.hp_last)//受击检测
-    {
-        diraction = can_receive.robot_decision_receive.by_hurt;
-        angle = gimbal.gimbal_yaw_motor.encode_angle;
-        add_angle = zhuangjiafangxiang[diraction] - angle;
-        /*---计算一个最小的追踪方向*/
-        if (add_angle > 0)
+        static int diraction=0;
+        if (patrol_time == 0)//在该位置巡逻结束，切换至下一位置
         {
-            if ((6.28 - add_angle) < 3.14) 
+            if (location_last == MID )
             {
-                add_angle = - (6.28 - add_angle);
+                location = FORTRESS;
+                //location_sw = 1;
+            }
+            else if (location_last == FORTRESS )
+            {
+                location = MID;
+                //location_sw = 0;
+            }
+            else
+            {
+                location = MID;
                 /* code */
             }
             
+            location_last = location;
+            patrol_time = 2000;//在一个位置巡逻的时间
+            patrol_move_flag = 1;//切换导航
             /* code */
         }
-        else if (add_angle < 0)
+        if (patrol_move_flag == 1)
         {
-            if ((6.28 + add_angle) < 3.14 )
+            if (reach_target() == 1)
             {
-                add_angle =  (6.28 + add_angle);
+                patrol_move_flag = 0;
                 /* code */
             }
-            
             /* code */
         }
-        /* code */
-    }
-    if ( -0.2 < add_angle && add_angle < 0.2)
-    {
-        add_yaw = 0;
-		add_angle = 0;
-        patrol_follow_rpm = 0.005;
-        /* code */
-    }
-    else
-    {
-        patrol_follow_rpm = 0;
-        if (add_angle > 0)
+        else //导航结束了，切换巡逻
         {
-            add_yaw = 0.005 ;
-            add_angle -= 0.005;
+        if (can_receive.robot_decision_receive.hp != can_receive.robot_decision_receive.hp_last)//受击检测
+        {
+            diraction = can_receive.robot_decision_receive.by_hurt;
+            angle = gimbal.gimbal_yaw_motor.encode_angle;
+            add_angle = zhuangjiafangxiang[diraction] - angle;
+            /*---计算一个最小的追踪方向*/
+            if (add_angle > 0)
+            {
+                if ((6.28 - add_angle) < 3.14) 
+                {
+                    add_angle = - (6.28 - add_angle);
+                    /* code */
+                }
+                /* code */
+            }
+            else if (add_angle < 0)
+            {
+                if ((6.28 + add_angle) < 3.14 )
+                {
+                    add_angle =  (6.28 + add_angle);
+                    /* code */
+                }
+                /* code */
+            }
+            /* code */
+        }
+        if ( -0.2 < add_angle && add_angle < 0.2)
+        {
+            patrol_time  --;
+            add_yaw =   0;
+		    add_angle = 0;
+            patrol_follow_rpm = 0.005;
             /* code */
         }
         else
         {
-            add_yaw = -0.005 ;
-            add_angle += 0.005;
+            patrol_follow_rpm = 0;
+            if (add_angle > 0)
+            {
+                add_yaw = 0.005 ;
+                add_angle -= 0.005;
+                /* code */
+            }
+            else
+            {
+                add_yaw = -0.005 ;
+                add_angle += 0.005;
+            }
         }
-    }
-    
+                /* code */
+            }
     //remote_ctrl_yaw2.rc.ch[0] = 180;
+}
+
+void Decision::patrol_mode_sw(void)
+{
+    int i =0 ;
 }
 
 void Decision::fight(void)
@@ -499,29 +559,21 @@ void Decision::is_fighting_ctrl(void)
 
 void Decision::injury_detection (void)
 {
-    if (hp_current != can_receive.robot_decision_receive.hp)
-    {
-        hp_last = hp_current;
-        hp_current = can_receive.robot_decision_receive.hp;
-        /* code */
-    }
+    // if (hp_current != can_receive.robot_decision_receive.hp)
+    // {
+    //     hp_last = hp_current;
+    //     hp_current = can_receive.robot_decision_receive.hp;
+    //     /* code */
+    // }
     
     if ( (can_receive.robot_decision_receive.hp_last - can_receive.robot_decision_receive.hp) >= 2 )//此时说明受到伤害
     {
-        //hp_last = hp_current;
         avoid_damage_time = AVOID_TIME;
-        //hurt_direction = can_receive.robot_decision_receive.by_hurt & 0x01;
-        // if ((can_receive.robot_decision_receive.by_hurt & 0x01) != 0)//说明第一快装甲受击
-        // {
-        //     add_yaw_to_counterattack = -gimbal.gimbal_pitch_motor.encode_angle + 0.785;//这里装甲板逆时针放置
-        //     /* code */
-        // }
         if (using_small_gyroscope == 4)//已经关闭小陀螺
         {
             using_small_gyroscope = 1; //请求开启小陀螺
             /* code */
         }
-		//can_receive.robot_decision_receive.by_hurt = 0;
         /* code */
     }
     else if(avoid_damage_time > 0)//没有受伤
@@ -554,6 +606,15 @@ void Decision::navi_set (void)
     remote_ctrl_yaw1.rc.s[0] = 1;
     remote_ctrl_yaw1.rc.s[1] = 3;
 }
+
+//注册控制函数
+void Decision::ctrl_buff_register(behavior_e be , void (Decision::*ctrl)() , void (Decision::*sw)())
+{
+    ctrl_buff[be].behavior = be;
+    ctrl_buff[be].ctrl_ptr = ctrl;
+    ctrl_buff[be].sw_ptr = sw;
+}
+
 
 void Decision::reveive_navi_status (uint8_t *data)
 {

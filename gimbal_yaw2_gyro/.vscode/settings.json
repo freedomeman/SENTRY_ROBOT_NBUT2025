@@ -27,6 +27,7 @@
         "streambuf": "cpp",
         "tim.h": "c",
         "software_reset_task.h": "c",
-        "communicate_task.h": "c"
+        "communicate_task.h": "c",
+        "type_traits": "cpp"
     }
 }

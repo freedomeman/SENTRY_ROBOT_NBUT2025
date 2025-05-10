@@ -944,7 +944,17 @@ void Chassis::power_ctrl_v3()
     // expected_power = chassis_power_limit-20.0f;
 
     //测试代码
-    expected_power=150.0f;
+    if (chassis_power_buff < 10)
+    {
+        expected_power=100.0f;
+        /* code */
+    }
+    else
+    {
+        expected_power = 150;
+    }
+    
+    
 
     fp32 sumPowerRequired = 0.0f;       //不包括负功率的电机功率需求和
     fp32 omega_error[4];                //四个电机的期望转速与实际转速的差
@@ -1050,7 +1060,7 @@ void Chassis::power_ctrl_v3()
                 newTorqueCurrent[i] = ((-b)/(2*a))*(16384.0f/20.0f);
             }
             
-            newTorqueCurrent[i] = fp32_constrain(newTorqueCurrent[i], -6000.0f, 6000.0f ); //输出限幅
+            newTorqueCurrent[i] = fp32_constrain(newTorqueCurrent[i], -8000.0f, 8000.0f ); //输出限幅
 
             chassis_motive_motor[i].current_set = newTorqueCurrent[i];                     //将得到的重分配电流值 传给电机
  

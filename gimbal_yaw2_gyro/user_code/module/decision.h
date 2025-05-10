@@ -32,6 +32,7 @@ typedef enum
     PATROL,
     FIGHT,
     FREE,
+    BEHAVIOR_FULL,
 } behavior_e;
 
 typedef enum
@@ -164,6 +165,21 @@ typedef struct
   uint8_t self_aiming_status;
 }yaw1_status_t;
 
+class Decision;
+
+class ctrl_buff_c
+{
+  public:
+    //注册自身行为
+    behavior_e behavior;
+    // 模式控制指针
+    //using behavior_set_ctrl = void (Decision::*)(void);
+    void (Decision::*ctrl_ptr)(void) ;  // 成员变量
+    // 模式切换指针
+    //using behavior_set_sw = void (Decision::*)(void);
+    void (Decision::*sw_ptr)(void) ;  // 成员变量
+};
+
 class Decision
 {
 
@@ -174,10 +190,13 @@ public:
 
     behavior_e behavior;
     location_e location;
+    location_e location_last;
 
     uint8_t chassis_cmd;
 
     yaw1_status_t yaw1_status;
+
+    ctrl_buff_c ctrl_buff[BEHAVIOR_FULL];
 
     const RC_ctrl_t   *remote_control_robot;
     RC_ctrl_t   *remote_control_robot_last;
@@ -207,6 +226,7 @@ public:
     void set_mode(void);
     void set_contrl(void);
     void patrol(void);
+    void patrol_mode_sw(void);
     void fight(void);
 
     const RC_ctrl_t* get_yaw2_ctrl_point(void);
@@ -226,6 +246,8 @@ public:
     uint8_t low_blood_is_or_not(void);
     void is_fighting_ctrl(void);
     void sentry_mode_set_control (void);
+
+    void ctrl_buff_register(behavior_e be , void (Decision::*ctrl)() , void (Decision::*sw)());
 
 
 };
