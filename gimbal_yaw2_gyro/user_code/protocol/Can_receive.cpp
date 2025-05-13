@@ -310,7 +310,7 @@ void Can_receive::send_rc_board_yaw_com(int16_t ch_0, int16_t ch_1, int16_t ch_5
     HAL_CAN_AddTxMessage(&BOARD_YAW_COM_CAN, &can_tx_message, can_send_data, &send_mail_box);
 }
 
-void Can_receive::send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp32 gimbal_yaw_angle, int16_t pitch)
+void Can_receive::send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp32 gimbal_yaw_angle, uint8_t auot_defence , uint8_t mode)
 {
     int32_t temp_gimbal_yaw_angle = (int32_t)(gimbal_yaw_angle * 1000);
 
@@ -330,8 +330,8 @@ void Can_receive::send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp
     can_send_data[3] = (uint8_t)((int32_t)temp_gimbal_yaw_angle >> 16);
     can_send_data[4] = (uint8_t)((int32_t)temp_gimbal_yaw_angle >> 8);
     can_send_data[5] = (uint8_t)((int32_t)temp_gimbal_yaw_angle);
-    can_send_data[6] = pitch >> 8;
-    can_send_data[7] = pitch;
+    can_send_data[6] = auot_defence;
+    can_send_data[7] = mode ; //pitch;
 
     HAL_CAN_AddTxMessage(&BOARD_COM_CAN, &can_tx_message, can_send_data, &send_mail_box);
 }

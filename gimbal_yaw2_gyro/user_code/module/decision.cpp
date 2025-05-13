@@ -34,9 +34,9 @@ void Decision::decision_init(void)
 
     robot_mode = ROBOT_ZERO_FORCE;
 
-    vset_to_remotset.x_set = 180;
-    vset_to_remotset.y_set = -280;
-    vset_to_remotset.z_set = -280;
+    vset_to_remotset.x_set = 240;
+    vset_to_remotset.y_set = -340;
+    vset_to_remotset.z_set = -340;
 
     using_small_gyroscope = 4;
 
@@ -184,7 +184,7 @@ void Decision::robot_set_control(void)
     else if (robot_mode == SENTRY_CTRL)
     {
         // sentry_mode_set();
-        // injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
+        injury_detection(); //这里会检测是否受到伤害，并开启小陀螺
         // sentry_mode_set_control();
         // if (sentry_behavior != IS_FIGHTING) //这里是为了屏蔽在去中心点时遇到敌人可以做击打，但不会设置到回家补血
         // {
@@ -193,7 +193,7 @@ void Decision::robot_set_control(void)
         // }
         set_mode();
         set_contrl();
-        navi_set();
+        //navi_set();
         remote_ctrl_yaw1.rc.s[0] = 2;
         /* code */
     }
@@ -211,7 +211,7 @@ uint8_t Decision::find_armi(void)
 uint8_t mode_sw=0;
 void Decision::set_mode(void)
 {
-    if (can_receive.robot_decision_receive.hp>100 && mode_sw == 0 )
+    if (can_receive.robot_decision_receive.hp>LOW_HP && mode_sw == 0 )
 	{
 		//location = MID;
 		if (reach_target()==1)
@@ -231,14 +231,14 @@ void Decision::set_mode(void)
 			behavior = FREE;
 		}
 	}
-	else if (can_receive.robot_decision_receive.hp<=100)
+	if (can_receive.robot_decision_receive.hp<=LOW_HP || can_receive.robot_decision_receive.power_mode>>2 != 1 || can_receive.robot_decision_receive.allowance < 50 )//判断血量低于阈值或者发射机构下电
 	{
 		location = HOME;
 		behavior = FREE;
         mode_sw = 1;
 		
 	}
-    if (mode_sw == 1)
+    if (mode_sw == 1 && ( can_receive.robot_decision_receive.power_mode>>2 == 1 &&  can_receive.robot_decision_receive.allowance >=50  ))
     {
         if (can_receive.robot_decision_receive.hp>300)
         {
@@ -557,6 +557,7 @@ void Decision::is_fighting_ctrl(void)
     
 }
 
+uint8_t auot_defence;
 void Decision::injury_detection (void)
 {
     // if (hp_current != can_receive.robot_decision_receive.hp)
@@ -569,27 +570,61 @@ void Decision::injury_detection (void)
     if ( (can_receive.robot_decision_receive.hp_last - can_receive.robot_decision_receive.hp) >= 2 )//此时说明受到伤害
     {
         avoid_damage_time = AVOID_TIME;
-        if (using_small_gyroscope == 4)//已经关闭小陀螺
-        {
-            using_small_gyroscope = 1; //请求开启小陀螺
-            /* code */
-        }
-        /* code */
+        auot_defence = 1;
     }
-    else if(avoid_damage_time > 0)//没有受伤
+    if (avoid_damage_time > 0)
     {
         avoid_damage_time --;
-        if (avoid_damage_time == 1) //一定时间没有受伤
-        {
-            using_small_gyroscope = 3; //请求关闭小陀螺
-            /* code */
-        }
-        
+        /* code */
     }
+    if (avoid_damage_time == 0)
+    {
+        auot_defence = 0;
+        /* code */
+    }
+    
+    
+
+    //     if (using_small_gyroscope == 4)//已经关闭小陀螺
+    //     {
+    //         using_small_gyroscope = 1; //请求开启小陀螺
+    //         /* code */
+    //     }
+    //     /* code */
+    // }
+    // else if(avoid_damage_time > 0)//没有受伤
+    // {
+    //     avoid_damage_time --;
+    //     if (avoid_damage_time == 1) //一定时间没有受伤
+    //     {
+    //         using_small_gyroscope = 3; //请求关闭小陀螺
+    //         /* code */
+    //     }
+        
+    // }
 }
 
 void Decision::navi_set (void)
 {
+    //这里对速度进行限制，因为傻鸟导航发的速度太小会不动的
+    // if ((receivenavistate.data.speed_vector.rollz <= 0.6 || receivenavistate.data.speed_vector.rollz >= -0.6) && receivenavistate.data.speed_vector.rollz != 0)
+    // {
+    //     receivenavistate.data.speed_vector.rollz = 0.6 *(receivenavistate.data.speed_vector.rollz/fabs(receivenavistate.data.speed_vector.rollz));
+    //     /* code */
+    // }
+    // if ((receivenavistate.data.speed_vector.speedy <= 0.6 || receivenavistate.data.speed_vector.speedy >= -0.6) && receivenavistate.data.speed_vector.speedy != 0)
+    // {
+    //     receivenavistate.data.speed_vector.speedy = 0.6 *(receivenavistate.data.speed_vector.speedy/fabs(receivenavistate.data.speed_vector.speedy));
+    //     /* code */
+    // }
+    // if ((receivenavistate.data.speed_vector.speedx <= 0.6 || receivenavistate.data.speed_vector.speedx >= -0.6) && receivenavistate.data.speed_vector.speedx != 0)
+    // {
+    //     receivenavistate.data.speed_vector.speedx = 0.6 *(receivenavistate.data.speed_vector.speedx/fabs(receivenavistate.data.speed_vector.speedx));
+    //     /* code */
+    // }
+    
+
+    
     remote_ctrl_yaw2.rc.ch[0] = receivenavistate.data.speed_vector.rollz * vset_to_remotset.z_set;
     remote_ctrl_yaw2.rc.ch[1] = 0;
     remote_ctrl_yaw2.rc.ch[2] = receivenavistate.data.speed_vector.speedy * vset_to_remotset.y_set;
@@ -689,7 +724,7 @@ void Decision::Send_Bace_Status (void)
 
    SendBaceStatusData.HeaderFrame.crc = get_CRC8_check_sum((uint8_t*)(&SendBaceStatusData.HeaderFrame),3,0xff);
 
-   SendBaceStatusData.data.flag = 1;//(can_receive.gimbal_receive.game_progress>>2)&1;//can_receive.gimbal_receive.game_progress;为1可以运动
+   SendBaceStatusData.data.flag = 1;//(can_receive.gimbal_receive.game_progress == 4 );//1;//(can_receive.gimbal_receive.game_progress>>2)&1;//can_receive.gimbal_receive.game_progress;为1可以运动
    SendBaceStatusData.data.chassis_cmd = chassis_cmd;//can_receive.gimbal_receive.game_time;0到中心点，1回家，2补弹
 
    SendBaceStatusData.crc = get_CRC16_check_sum((uint8_t*)&SendBaceStatusData,send_length-2,0xffff);

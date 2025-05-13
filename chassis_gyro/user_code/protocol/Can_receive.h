@@ -76,6 +76,8 @@ typedef struct
 
   //云台状态
   uint8_t s1;
+  uint8_t auot_defence;
+  uint8_t robo_mode;
   uint8_t gimbal_behaviour;
   fp32 gimbal_yaw_angle;
   fp32 gimbal_pitch_angle;

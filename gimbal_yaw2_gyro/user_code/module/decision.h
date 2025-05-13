@@ -4,7 +4,7 @@
 
 #include "remote_control.h"
 
-#define LOW_HP  100
+#define LOW_HP  200
 #define FALL_HP 400
 #define AVOID_TIME  2500
 

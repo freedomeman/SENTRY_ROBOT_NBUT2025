@@ -105,7 +105,7 @@
 //原地旋转小陀螺下Z轴转速
 #define TOP_WZ_ANGLE_STAND 8.0f
 //移动状态下小陀螺转速
-#define TOP_WZ_ANGLE_MOVE 1.0f
+#define TOP_WZ_ANGLE_MOVE 5.0f
 
 
 #define CHASSIS_WZ_SET_SCALE 0.1f

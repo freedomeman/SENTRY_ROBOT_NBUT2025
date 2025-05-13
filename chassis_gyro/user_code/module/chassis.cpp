@@ -429,19 +429,19 @@ void Chassis::output()
             chassis_motive_motor[i].current_give = 0;
         }
 
-        if (last_pitch_current == pitch_current)
-        {
-            chassis_run_cnt++;
-            if(chassis_run_cnt >= 5000)
-            {
-                for (int i = 0; i < 4; i++)
-                chassis_motive_motor[i].current_give = 0;
-            }
-        }
-        else
-        {
-            chassis_run_cnt = 0;
-        }
+        // if (last_pitch_current == pitch_current)
+        // {
+        //     chassis_run_cnt++;
+        //     if(chassis_run_cnt >= 5000)
+        //     {
+        //         for (int i = 0; i < 4; i++)
+        //         chassis_motive_motor[i].current_give = 0;
+        //     }
+        // }
+        // else
+        // {
+        //     chassis_run_cnt = 0;
+        // }
     }
 
     //电流输出控制,通过调整宏定义控制
@@ -657,11 +657,23 @@ void Chassis::chassis_infantry_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_
 
     /**************************小陀螺控制输入********************************/
     //单击F开启和关闭小陀螺
-    if (KEY_CHASSIS_TOP && top_switch == 0) //开启小陀螺
+    if(can_receive.chassis_receive.robo_mode == 1)
+    {
+        if(can_receive.chassis_receive.auot_defence == 1)
+        {
+            top_switch = 1;
+        }
+        else if(can_receive.chassis_receive.auot_defence == 0)
+        {
+            top_switch = 0;
+        }
+    }
+    
+    if ((KEY_CHASSIS_TOP && top_switch == 0) ) //开启小陀螺
     {
         top_switch = 1;
     }
-    else if (KEY_CHASSIS_TOP && top_switch == 1) //关闭小陀螺
+    else if (KEY_CHASSIS_TOP && top_switch == 1 ) //关闭小陀螺
     {
         top_switch = 0;
     }

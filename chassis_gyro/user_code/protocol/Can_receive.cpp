@@ -99,7 +99,9 @@ void Can_receive::receive_gimbal_board_com(uint8_t data[8])
     chassis_receive.s1 = data[0];
     chassis_receive.gimbal_behaviour = data[1];
     chassis_receive.gimbal_yaw_angle = (fp32)(int32_t)(data[2] << 24 | data[3] << 16 | data[4] << 8 | data[5]) / 1000;
-    chassis_receive.gimbal_pitch_current = (int16_t)(data[6] << 8 | data[7]);
+    chassis_receive.gimbal_pitch_current = 0; //(int16_t)(data[6] << 8 | data[7]);
+    chassis_receive.auot_defence = data[6];
+    chassis_receive.robo_mode = data[7];
     
 }
 void Can_receive::receive_ui_board_com(uint8_t data[8])

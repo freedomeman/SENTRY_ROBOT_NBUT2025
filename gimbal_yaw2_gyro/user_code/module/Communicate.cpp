@@ -26,6 +26,7 @@ extern bool_t auto_switch;
 extern Shoot shoot;
 extern Decision decision;
 extern float patrol_move_flag;//这个用于巡逻时省电的
+extern uint8_t auot_defence;
 
 void Communicate::init()
 {
@@ -59,7 +60,7 @@ void Communicate::run()
     //向底盘发送遥控器和云台数据
     int16_t temp_ch0, temp_ch2, temp_ch3;
     uint16_t temp_v;
-    uint8_t temp_s0, temp_gimbal_behaviour_mode, temp_s1;
+    uint8_t temp_s0, temp_gimbal_behaviour_mode, temp_s1,mode;
     fp32 temp_gimbal_yaw_angle;
 
     fp32 temp_gimbal_pitch_angle;
@@ -89,18 +90,18 @@ void Communicate::run()
         /* code */
         ch_switch = 1;
     }
-    if (decision.using_small_gyroscope == 1 )
-    {
-        temp_v = 512;
-        decision.using_small_gyroscope = 2;
-        /* code */
-    }
-    if (decision.using_small_gyroscope == 3)
-    {
-        temp_v = 512;
-        decision.using_small_gyroscope = 4;
-        /* code */
-    }
+    // if (decision.using_small_gyroscope == 1 )
+    // {
+    //     temp_v = 512;
+    //     decision.using_small_gyroscope = 2;
+    //     /* code */
+    // }
+    // if (decision.using_small_gyroscope == 3)
+    // {
+    //     temp_v = 512;
+    //     decision.using_small_gyroscope = 4;
+    //     /* code */
+    // }
     
     
     
@@ -110,7 +111,19 @@ void Communicate::run()
     temp_gimbal_pitch_angle = gimbal.gimbal_pitch_motor.encode_angle;
 
     temp_s0  = decision.remote_ctrl_yaw2.rc.s[0];
-    can_receive.send_gimbal_board_com(temp_s0, temp_gimbal_behaviour_mode, temp_gimbal_yaw_angle, gimbal.gimbal_pitch_motor.current_give);
+    if (decision.robot_mode == SENTRY_CTRL)
+    {
+        
+        mode = 1;
+        /* code */
+    }
+    else{
+        auot_defence = 0;
+        mode = 0;
+    }
+    
+    
+    can_receive.send_gimbal_board_com(temp_s0, temp_gimbal_behaviour_mode, temp_gimbal_yaw_angle, auot_defence , mode);
     // if (game_start())
     // {
     //     can_receive.send_UI_com(temp_auto, temp_aim, temp_fric, temp_cover, temp_vision_cmdid, temp_v);

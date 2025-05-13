@@ -198,7 +198,7 @@ public:
     void receive_shoot_speed_and_mode_board_com(uint8_t data[8]);
     void receive_robot_decision_receive_com(uint8_t data[8]);
     void send_rc_board_com(int16_t ch_0, int16_t ch_2, int16_t ch_3, uint16_t v);            //发送遥控器数据
-    void send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp32 gimbal_yaw_angle, int16_t pitch); //发送云台模式及状态
+    void send_gimbal_board_com(uint8_t s0, uint8_t gimbal_behaviour, fp32 gimbal_yaw_angle, uint8_t auot_defence , uint8_t mode); //发送云台模式及状态
     void send_UI_com(bool_t auto_s, bool_t aim_s, bool_t fric_s, bool_t cover_s, uint8_t vision_cmdid, uint16_t v);   //发送UI数据
 
     void send_SendPacket(SendPacketTwist_t& SendPacketTwist);//发送视觉数据
