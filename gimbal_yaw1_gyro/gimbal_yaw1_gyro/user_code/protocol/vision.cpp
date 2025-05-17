@@ -352,6 +352,8 @@ void vision_send_data_rv2(uint8_t CmdID)
 //    }
 //  }
 // }
+
+float debug_int;
 void vision_read_data_rv2(uint8_t *ReadFormUart)
 {
 
@@ -383,6 +385,7 @@ void vision_read_data_rv2(uint8_t *ReadFormUart)
         if_identify_target = TRUE;
       }
 
+      //debug_int = gimbal.gimbal_pitch_motor.gyro_angle / VisionRecvData_rv2.pitch;
       VisionRecvData_rv2.pitch = -(57.3*VisionRecvData_rv2.pitch - gimbal.gimbal_pitch_motor.gyro_angle);
       VisionRecvData_rv2.yaw = -(57.3*VisionRecvData_rv2.yaw - gimbal.gimbal_yaw_motor.gyro_angle);
 

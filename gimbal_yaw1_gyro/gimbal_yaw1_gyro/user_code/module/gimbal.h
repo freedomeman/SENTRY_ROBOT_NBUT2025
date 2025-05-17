@@ -63,9 +63,9 @@ extern "C"
 
 /*------------------------------编码器PID------------------------*/
 // yaw轴编码器PID 由编码器角度控制
-#define YAW_ENCODE_PID_KP 55.0f
-#define YAW_ENCODE_PID_KI 0.02f
-#define YAW_ENCODE_PID_KD 550.0f
+#define YAW_ENCODE_PID_KP 32.0f
+#define YAW_ENCODE_PID_KI 0.0f
+#define YAW_ENCODE_PID_KD 460.0f
 #define YAW_ENCODE_PID_MAX_IOUT 5.0f
 #define YAW_ENCODE_PID_MAX_OUT 20.0f
 

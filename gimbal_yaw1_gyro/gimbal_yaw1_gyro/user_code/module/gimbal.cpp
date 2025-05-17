@@ -598,7 +598,7 @@ void Gimbal::gimbal_chassis_control(fp32 *yaw, fp32 *pitch)
     {
         vision_error_angle_rv2(yaw, pitch); //获取yaw 和 pitch的偏移量
         can_receive.send_yaw_mode(gimbal_yaw_motor.encode_angle , 1);
-        auto_aim_flag = 1;//视觉识别到自己开启自瞄
+        //auto_aim_flag = 1;//视觉识别到自己开启自瞄
     }
     else
     {   auto_aim_flag = 0;

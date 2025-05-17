@@ -547,11 +547,11 @@ void Shoot::feedback_update()
           }
           else
           {
-            if (gimbal.gimbal_mode == GIMBAL_CHASSIS)
-            {
-                shoot_mode = SHOOT_STOP;
-                /* code */
-            }
+//            if (gimbal.gimbal_mode == GIMBAL_CHASSIS)
+//            {
+//                shoot_mode = SHOOT_STOP;
+//                /* code */
+//            }
             
             
               target_detect_count = 0;
