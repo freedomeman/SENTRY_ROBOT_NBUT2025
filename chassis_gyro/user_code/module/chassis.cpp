@@ -956,7 +956,7 @@ void Chassis::power_ctrl_v3()
     // expected_power = chassis_power_limit-20.0f;
 
     //测试代码
-    if (chassis_power_buff < 10)
+    if (chassis_power_buff < 40)
     {
         expected_power=100.0f;
         /* code */

@@ -193,8 +193,8 @@ void Decision::robot_set_control(void)
         // }
         set_mode();
         set_contrl();
-        //navi_set();
-        remote_ctrl_yaw1.rc.s[0] = 2;
+        navi_set();
+        //remote_ctrl_yaw1.rc.s[0] = 2;
         /* code */
     }
 
@@ -231,14 +231,14 @@ void Decision::set_mode(void)
 			behavior = FREE;
 		}
 	}
-	if (can_receive.robot_decision_receive.hp<=LOW_HP || can_receive.robot_decision_receive.power_mode>>2 != 1 || can_receive.robot_decision_receive.allowance < 50 )//判断血量低于阈值或者发射机构下电
+	if (can_receive.robot_decision_receive.hp<=LOW_HP || can_receive.robot_decision_receive.power_mode>>2 != 1 )//判断血量低于阈值或者发射机构下电|| can_receive.robot_decision_receive.allowance < 50 
 	{
 		location = HOME;
 		behavior = FREE;
         mode_sw = 1;
 		
 	}
-    if (mode_sw == 1 && ( can_receive.robot_decision_receive.power_mode>>2 == 1 &&  can_receive.robot_decision_receive.allowance >=50  ))
+    if (mode_sw == 1 && ( can_receive.robot_decision_receive.power_mode>>2 == 1   )) //&&  can_receive.robot_decision_receive.allowance >=50
     {
         if (can_receive.robot_decision_receive.hp>300)
         {
@@ -253,6 +253,12 @@ void Decision::set_mode(void)
         add_yaw = 0;
         /* code */
     }
+    if (behavior != FIGHT)
+    {
+        yaw2_follow_angle = 0;
+        /* code */
+    }
+    
     
     
 
@@ -394,29 +400,29 @@ void Decision::fight(void)
 {
     if (yaw1_status.yaw_encoder_angle >= MAX_YAW1_ANGLE)
     {
-        yaw2_follow_angle = 0.6;
+        yaw2_follow_angle = 0.01;
         /* code */
     }
     if (yaw1_status.yaw_encoder_angle <= MIN_YAW1_ANGLE)
     {
-        yaw2_follow_angle = -0.6;
+        yaw2_follow_angle = -0.01;
         /* code */
     }
-    if (yaw2_follow_angle > 0.2)
+    // if (yaw2_follow_angle > 0.2)
+    // {
+    //     remote_ctrl_yaw2.rc.ch[0] = 90;
+    //     yaw2_follow_angle -= 90*0.01;
+    //     /* code */
+    // }
+    // else if (yaw2_follow_angle < -0.2)
+    // {
+    //     remote_ctrl_yaw2.rc.ch[0] = -90;
+    //     yaw2_follow_angle += 90*0.01;
+    //     /* code */
+    // }
+    else if ( -0.2 < yaw1_status.yaw_encoder_angle < 0.2)
     {
-        remote_ctrl_yaw2.rc.ch[0] = 90;
-        yaw2_follow_angle -= 90*0.01;
-        /* code */
-    }
-    else if (yaw2_follow_angle < -0.2)
-    {
-        remote_ctrl_yaw2.rc.ch[0] = -90;
-        yaw2_follow_angle += 90*0.01;
-        /* code */
-    }
-    else if ( -0.2 < yaw2_follow_angle < 0.2)
-    {
-        remote_ctrl_yaw2.rc.ch[0] = 0;
+        yaw2_follow_angle = 0;
         /* code */
     }
 }
@@ -488,11 +494,22 @@ uint8_t Decision::need_attack(void) //这里判断是否需要攻击
         
 uint8_t Decision::reach_target (void)
 {
-    if (receivenavistate.data.speed_vector.speedx == 0 && receivenavistate.data.speed_vector.speedy == 0)//说明此时已经导航到目标点
+    if (receivenavistate.data.speed_vector.speedx >= -0.001 && receivenavistate.data.speed_vector.speedx <= 0.001)
     {
-        return 1;
+        if (receivenavistate.data.speed_vector.speedy >= -0.001 && receivenavistate.data.speed_vector.speedy <= 0.001)
+        {
+            return 1;
+            /* code */
+        }
+        
         /* code */
     }
+    
+    // if (receivenavistate.data.speed_vector.speedx == 0 && receivenavistate.data.speed_vector.speedy == 0)//说明此时已经导航到目标点
+    // {
+    //     return 1;
+    //     /* code */
+    // }
     return 0 ;
 
     

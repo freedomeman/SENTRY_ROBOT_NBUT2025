@@ -51,6 +51,7 @@ float error_ki=0;
 float error_kd=0;
 float error_last=0;
 extern float angle , add_angle , add_yaw , patrol_follow_rpm;
+extern float yaw2_follow_angle;
 
 void Gimbal::set_pid()
 {
@@ -612,6 +613,7 @@ void Gimbal::gimbal_chassis_control(fp32 *yaw, fp32 *pitch)
 
         *yaw += add_yaw;
         *yaw += patrol_follow_rpm;
+        *yaw += yaw2_follow_angle;
         patrol_follow_rpm = 0;
         //掉头控制
         turn_around_control(yaw);
